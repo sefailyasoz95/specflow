@@ -125,6 +125,18 @@ export function toLines(ctx: Ctx): Line[] {
           });
         if (op.status && op.status !== before?.status)
           changes.push({ field: "status", from: before?.status ?? "—", to: op.status });
+        if (op.startDate && op.startDate !== before?.start_date)
+          changes.push({
+            field: "starts",
+            from: before?.start_date ?? "—",
+            to: op.startDate,
+          });
+        if (op.endDate && op.endDate !== before?.end_date)
+          changes.push({
+            field: "ends",
+            from: before?.end_date ?? "—",
+            to: op.endDate,
+          });
         return {
           kind: "mod",
           entity: "sprint",

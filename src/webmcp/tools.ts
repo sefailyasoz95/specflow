@@ -321,7 +321,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     {
       name: "propose_changes",
       description:
-        "Propose edits to things that already exist: retitle or re-estimate a task, move it between sprints, change its status, delete it, reprioritise a requirement, or mark a sprint active or done. Also accepts brand new tasks for an existing sprint. Everything lands in one reviewable change set. Call get_project_context first — these take real ids.",
+        "Propose edits to things that already exist: retitle or re-estimate a task, move it between sprints, change its status, delete it, reprioritise a requirement, mark a sprint active or done, or move a sprint's dates. Also accepts brand new tasks for an existing sprint. Everything lands in one reviewable change set. Call get_project_context first — these take real ids.",
       inputSchema: {
         type: "object",
         properties: {
@@ -394,6 +394,8 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
                 name: str("New name."),
                 goal: str("New goal."),
                 status: { type: "string", enum: ["planned", "active", "done"] },
+                startDate: str("New start date, YYYY-MM-DD."),
+                endDate: str("New end date, YYYY-MM-DD."),
               },
               required: ["sprintId"],
             },
@@ -477,6 +479,8 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             name: u.name ? String(u.name) : undefined,
             goal: u.goal ? String(u.goal) : undefined,
             status: u.status as SprintStatus | undefined,
+            startDate: u.startDate ? String(u.startDate) : undefined,
+            endDate: u.endDate ? String(u.endDate) : undefined,
           })),
           ...removes.map<Op>((id) => ({ op: "delete_task", taskId: id })),
         ];
