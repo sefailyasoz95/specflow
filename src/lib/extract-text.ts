@@ -20,8 +20,35 @@ export const ACCEPTED_BRIEF_TYPES = [
 
 export const MAX_BRIEF_BYTES = 8 * 1024 * 1024;
 
-/** Guard against a 400-page PDF blowing the model's context and the bill. */
-const MAX_CHARS = 120_000;
+/** What we are willing to keep. A brief is provenance: the plan is only
+ *  defensible if the thing it was made from is still readable later. */
+const MAX_STORED_CHARS = 120_000;
+
+/** What we are willing to pay to read.
+ *
+ *  These are two different numbers on purpose. Storage is cheap and the
+ *  full document is worth having; input tokens are not, and a 400-page
+ *  PDF attached to a two-line brief would bill for all 400 pages. Around
+ *  24k characters is roughly six thousand tokens — comfortably more than
+ *  any real PRD's substance, and a fifth of what the old single limit
+ *  allowed through. */
+export const MAX_PROMPT_CHARS = 24_000;
+
+/**
+ * The slice of a brief that goes to the model.
+ *
+ * Cutting from the end rather than the middle is deliberate: a PRD front-
+ * loads what it is building and back-loads appendices, so the first 24k
+ * characters are the part worth planning from. The model is told the text
+ * was cut so it does not treat a truncated sentence as a finished thought.
+ */
+export function briefForPrompt(brief: string): string {
+  if (brief.length <= MAX_PROMPT_CHARS) return brief;
+  return (
+    brief.slice(0, MAX_PROMPT_CHARS) +
+    "\n\n[The brief is longer than this. It was cut here — plan from what you can see, and say in your reasoning that you only saw the beginning.]"
+  );
+}
 
 export class BriefError extends Error {}
 
@@ -83,7 +110,7 @@ export async function extractBriefText(file: File): Promise<string> {
     );
   }
 
-  return cleaned.length > MAX_CHARS
-    ? cleaned.slice(0, MAX_CHARS) + "\n\n[truncated]"
+  return cleaned.length > MAX_STORED_CHARS
+    ? cleaned.slice(0, MAX_STORED_CHARS) + "\n\n[truncated]"
     : cleaned;
 }

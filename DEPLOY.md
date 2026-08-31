@@ -20,15 +20,38 @@ Production **and** Preview:
 
 ### 2. Supabase
 
-Run `supabase/schema.sql` in the SQL editor. It is the six migrations
+Run `supabase/schema.sql` in the SQL editor. It is the seven migrations
 concatenated and every statement is idempotent, so running it again on a
 database that already has some of them is safe.
 
 Then, in Authentication → URL Configuration, add the deployed origin to
-the redirect allow-list. Without it, the email confirmation link sends
-people to localhost.
+the redirect allow-list.
 
-### 3. Function duration
+On a free project created after 3 June 2026 the auth email templates
+cannot be edited, and Supabase's built-in mailer sends **two emails per
+hour project-wide** — enough to lock out the third person who tries to
+sign up. So for a public demo, turn **Confirm email** off under
+Authentication → Sign In / Providers → Email. Nothing in the app depends
+on it: with confirmation off, `signUp` returns a session directly.
+
+### 3. A spend limit on the OpenAI account
+
+`/api/plan` is the only endpoint that spends money, and with email
+confirmation off an account costs a visitor about three seconds. The app
+bounds this from two directions:
+
+- **In the app** — `src/lib/rate-limit.ts` allows 8 plans per hour and 25
+  per day per account, counted in `plan_runs`. The row is written *before*
+  the model call, because a rejected brief is billed like an accepted one.
+  Input to the model is capped at 24k characters and output at 16k tokens.
+- **On the account** — set a monthly budget in platform.openai.com →
+  Settings → Limits, with an email alert below it.
+
+The second one is the one that cannot fail open. The in-app limiter
+deliberately degrades to "allow" if `plan_runs` is unreadable, because a
+broken counter should not take planning down during a demo.
+
+### 4. Function duration
 
 `/api/plan` calls a model and takes 30–60 seconds. With Fluid compute —
 on by default — Hobby allows up to 300s, so the route's `maxDuration =

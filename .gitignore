@@ -43,3 +43,7 @@ next-env.d.ts
 # skills installer artefact (duplicate of .agents/skills)
 /agent
 tsconfig.tsbuildinfo
+
+# Scratch: the session mount cannot delete files, so stale build output
+# is moved here instead. Safe to remove.
+/_to_delete/

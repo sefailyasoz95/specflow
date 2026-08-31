@@ -27,6 +27,14 @@ export type Project = {
   created_at: string;
 };
 
+/** One paid planning call. Rows exist only to bound how many of them
+ *  a single account can make in an hour or a day — see lib/rate-limit. */
+export type PlanRun = {
+  id: string;
+  user_id: string;
+  created_at: string;
+};
+
 /** The brief or PRD a project was planned from. Its provenance. */
 export type ProjectBrief = {
   id: string;
@@ -163,6 +171,7 @@ export type Database = {
       sprints: Row<Sprint>;
       tasks: Row<Task>;
       change_sets: Row<ChangeSet>;
+      plan_runs: Row<PlanRun>;
     };
     Views: Record<never, never>;
     Functions: {

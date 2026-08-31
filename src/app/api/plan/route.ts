@@ -3,7 +3,8 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { createClient } from "@/lib/supabase/server";
 import { GeneratedPlan, looksLikeFiller } from "@/lib/plan-schema";
-import { BriefError, extractBriefText } from "@/lib/extract-text";
+import { BriefError, briefForPrompt, extractBriefText } from "@/lib/extract-text";
+import { checkPlanRate, recordPlanRun } from "@/lib/rate-limit";
 import type { Op, Project } from "@/lib/types";
 
 /* pdf-parse and mammoth are Node libraries, and a model call is not a
@@ -12,6 +13,13 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const MODEL = process.env.OPENAI_PLANNING_MODEL ?? "gpt-5.6";
+
+/* A ceiling on the other half of the bill. The largest plan this has
+   produced in practice — 8 requirements, 4 sprints, 38 tasks — lands well
+   under this, so the cap is not a quality limit; it is the difference
+   between a bad day and an unbounded one. A response that hits it comes
+   back marked incomplete, and is reported as such rather than parsed. */
+const MAX_OUTPUT_TOKENS = 16_000;
 
 const SYSTEM = `You are a delivery lead who has shipped a lot of software and has watched a lot of plans fail. You turn a brief into a plan a small team could actually start on Monday.
 
@@ -70,6 +78,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "You need to be signed in." }, { status: 401 });
   }
 
+  /* Checked before the upload is even read: an 8MB PDF should not be
+     parsed on behalf of a caller who is over their quota. */
+  const rate = await checkPlanRate(supabase, user.id);
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: rate.message },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: "Planning is not configured — OPENAI_API_KEY is missing." },
@@ -125,6 +143,11 @@ export async function POST(request: Request) {
     );
   }
 
+  /* From here on the request costs money, so it is counted. Deliberately
+     before the call rather than after it: a run that fails or gets
+     rejected was still billed. */
+  await recordPlanRun(supabase, user.id);
+
   // ------------------------------------------------------------- plan it
   let plan: GeneratedPlan;
   try {
@@ -144,7 +167,7 @@ export async function POST(request: Request) {
             fileName ? `Source document: ${fileName}` : null,
             "",
             "The brief:",
-            brief,
+            briefForPrompt(brief),
           ]
             .filter((line) => line !== null)
             .join("\n"),
@@ -153,7 +176,16 @@ export async function POST(request: Request) {
       // Strict schema: the model cannot return a shape we then have to
       // guess at. The same schema backs the propose_plan WebMCP tool.
       text: { format: zodTextFormat(GeneratedPlan, "plan") },
+      max_output_tokens: MAX_OUTPUT_TOKENS,
     });
+
+    if (response.status === "incomplete") {
+      throw new Error(
+        response.incomplete_details?.reason === "max_output_tokens"
+          ? "the plan ran past the length limit before it finished. Try a shorter brief, or one project at a time."
+          : "the model stopped before it finished."
+      );
+    }
 
     if (!response.output_parsed) {
       throw new Error("The model returned nothing to parse.");
