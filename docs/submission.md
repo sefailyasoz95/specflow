@@ -107,7 +107,10 @@ Realtime) · WebMCP · deployed on Vercel
 
 ## Submission checklist
 
-- [ ] Live URL, reachable in ChatGPT's browser / Chrome with WebMCP enabled
+- [ ] Live URL, opened in desktop Chrome with `#enable-webmcp-testing`
+      enabled — that is the surface this was verified on. In-app browsers do
+      not expose WebMCP; say so in the submission so a judge does not test
+      it in one and conclude the tools are broken.
 - [ ] Demo video under 3 minutes, on YouTube, public
 - [ ] Public repo with source, instructions and an OSI license (MIT — done)
 - [ ] Text description (this document)

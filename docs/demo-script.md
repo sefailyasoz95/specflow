@@ -15,6 +15,19 @@ the close. Record with the header badge visible: it proves WebMCP is live.
 | 2:35–2:50 | Agent re-cuts the sprint, `focus` rings the sprint on screen | "It can also move my view and point at what it's talking about." |
 | 2:50–3:00 | Board, final state | "Agents propose. Humans dispose. That's Sprintfy." |
 
+## Where to record
+
+Desktop Chrome with `chrome://flags/#enable-webmcp-testing` enabled — that
+is the only surface confirmed to expose `document.modelContext`. If the
+agent half is being shown live, drive it with ChatGPT's Chrome extension in
+that same browser. Do not record in an in-app browser: neither ChatGPT's nor
+Claude's exposes WebMCP, and the badge will correctly say off.
+
+Keep project creation out of the critical path. The planner takes around a
+minute against a real brief, which is a third of the video; open on a
+project that already has a proposal waiting and show the review loop, which
+is the part nothing else does. Creation is a five-second cut.
+
 ## Recording notes
 
 - Zoom the browser to ~110% — the diff is the hero and it must be readable at

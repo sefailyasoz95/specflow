@@ -121,11 +121,20 @@ and the `apply_change_set` function.
 
 ### Turning WebMCP on
 
-Open Sprintfy in ChatGPT's browser, or in Chrome:
+Desktop Chrome:
 
 1. `chrome://flags/#enable-webmcp-testing` → **Enabled**
 2. Relaunch Chrome
-3. Reload Sprintfy — the header badge turns orange and lists the live tools
+3. Reload Sprintfy — the header badge lights up and lists the live tools
+
+Confirmed working: Chrome exposes the spec surface, `document.modelContext`,
+and the page registers against it. Driving it with ChatGPT works through
+ChatGPT's **Chrome extension** in that same browser.
+
+In-app browsers — ChatGPT's own and Claude's — do not expose WebMCP, so the
+tools stay dormant there no matter how the page is opened. If the badge says
+off, open it: it lists every surface that was probed and what was found,
+which is usually faster than guessing at browser flags.
 
 ---
 

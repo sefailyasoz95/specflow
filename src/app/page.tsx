@@ -95,9 +95,8 @@ export default function Home() {
         <section className="mt-24 max-w-[62ch]">
           <h2 className="display text-[26px] text-fg">Turning WebMCP on</h2>
           <p className="mt-3 text-[13.5px] leading-[1.6] text-fg-mid">
-            Open Sprintfy inside ChatGPT&apos;s browser, or in Chrome with the
-            flag enabled. The badge in the header turns on and lists the live
-            tools.
+            It needs desktop Chrome. The badge in the header turns on and
+            lists the live tools.
           </p>
           <ol className="mt-5 space-y-2.5">
             {[
@@ -113,6 +112,12 @@ export default function Home() {
               </li>
             ))}
           </ol>
+          <p className="mt-5 text-[13px] leading-[1.6] text-fg-dim">
+            To drive it with ChatGPT, use its Chrome extension in that same
+            browser. The in-app browsers — ChatGPT&apos;s own, and
+            Claude&apos;s — do not expose WebMCP, so the tools stay dormant
+            there however the page is opened.
+          </p>
         </section>
       </main>
     </div>

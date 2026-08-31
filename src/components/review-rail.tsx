@@ -93,7 +93,11 @@ export function WebMCPStatus({
                   <Fact>3</Fact> Reload this page.
                 </li>
               </ol>
-              <p>Or open Sprintfy inside ChatGPT&apos;s browser.</p>
+              <p>
+                Desktop Chrome only. In-app browsers — ChatGPT&apos;s and
+                Claude&apos;s — do not expose WebMCP. To drive it with
+                ChatGPT, use its Chrome extension in this browser.
+              </p>
             </div>
           )}
         </div>
