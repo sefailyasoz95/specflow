@@ -66,7 +66,7 @@ what `toolchange` in the spec is for.
 | --- | --- | --- |
 | `get_project_context` | read | Requirements, sprints, tasks, estimates, pending proposals, and the human's live view. |
 | `propose_plan` | propose | Rough brief → requirements + sprints + tasks + estimates, as one diff. Uses local `ref` ids to wire tasks to the sprints it is creating in the same call. |
-| `propose_task_changes` | propose | Create, retitle, re-estimate, re-status, move between sprints, delete. Validates task ids against the project before proposing. |
+| `propose_changes` | propose | Edit what exists: tasks (retitle, re-estimate, re-status, move sprint, delete), requirement priority and status, sprint name/goal/status. Validates every id against the project before proposing. |
 | `apply_pending_changes` | handoff | Opens the diff and waits for the human. Returns their decision. |
 | `discard_pending_changes` | handoff | Withdraw a proposal that missed. |
 | `focus` | point | Switch view, select a sprint, filter, or ring one task/sprint/requirement while talking about it. |

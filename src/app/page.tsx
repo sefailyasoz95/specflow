@@ -1,143 +1,150 @@
 import Link from "next/link";
 import { LandingAgent } from "@/components/landing-agent";
+import { LandingPatch } from "@/components/landing-patch";
 
-const TOOLS = [
-  ["get_project_context", "read", "The whole plan — plus what the human is looking at right now."],
-  ["propose_plan", "propose", "Rough brief in, a full requirements / sprints / tasks diff out."],
-  ["propose_task_changes", "propose", "Retitle, re-estimate, move between sprints, delete."],
-  ["apply_pending_changes", "handoff", "Asks the human, and waits for their answer."],
-  ["discard_pending_changes", "handoff", "Withdraw a proposal that missed."],
-  ["focus", "point", "Move their view and ring the thing you are talking about."],
-] as const;
-
-const TONE = {
-  read: "text-ink-faint",
-  propose: "text-add",
-  handoff: "text-agent",
-  point: "text-mod",
-} as const;
+const TOOLS: [string, string][] = [
+  [
+    "get_project_context",
+    "The plan, and what the human is looking at right now.",
+  ],
+  ["propose_plan", "A rough brief in; requirements, sprints, tasks and estimates out."],
+  ["propose_changes", "Retitle, re-estimate, move sprints, reprioritise, delete."],
+  ["apply_pending_changes", "Asks the human. Waits. Returns what they decided."],
+  ["discard_pending_changes", "Withdraw a proposal that missed."],
+  ["focus", "Move their view, and ring the thing you're talking about."],
+];
 
 export default function Home() {
   return (
     <div className="min-h-dvh">
-      <header className="mx-auto flex w-full max-w-4xl items-center gap-3 px-5 py-5">
-        <span className="text-[15px] font-medium tracking-tight text-ink">
-          Spec<span className="text-agent">Flow</span>
-        </span>
-        <div className="ml-auto flex items-center gap-2">
+      <header className="mx-auto flex w-full max-w-6xl items-center gap-3 px-6 py-5">
+        <span className="display text-[17px] text-fg">SpecFlow</span>
+        <div className="ml-auto flex items-center gap-1">
           <LandingAgent />
           <Link
             href="/login"
-            className="press rounded-lg border border-line bg-raised px-3 py-1.5 text-[13px] text-ink hover:bg-hover"
+            className="press rounded-lg px-3 py-1.5 text-[13px] text-fg-mid hover:bg-ink-800 hover:text-fg"
           >
             Sign in
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl px-5 pb-24">
-        <section className="enter max-w-2xl pt-16">
-          <p className="font-mono text-[12px] uppercase tracking-widest text-agent">
-            Built on WebMCP
-          </p>
-          <h1 className="mt-4 text-[42px] font-medium leading-[1.08] tracking-[-0.02em] text-ink sm:text-[56px]">
-            Plan software <span className="text-ink-faint">with</span> your
-            agent.
-            <br />
-            Not <span className="text-ink-faint">for</span> it.
-          </h1>
-          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-ink-dim">
-            SpecFlow turns a rough brief into requirements, sprints, tasks and
-            estimates. Your agent does the decomposition inside the same
-            workspace you use — but it can&apos;t write a thing. It proposes a
-            diff. You approve it.
-          </p>
-          <div className="mt-7 flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/signup"
-              className="press rounded-lg bg-ink px-4 py-2.5 text-[13.5px] font-medium text-canvas hover:bg-white"
-            >
-              Start planning
-            </Link>
-            <Link
-              href="/login"
-              className="press rounded-lg border border-line px-4 py-2.5 text-[13.5px] text-ink-dim hover:bg-raised hover:text-ink"
-            >
-              I have an account
-            </Link>
+      <main className="mx-auto w-full max-w-6xl px-6 pb-28">
+        {/* The hero is the artefact itself: a real change set, rendered by
+            the same component the product uses. */}
+        <section className="grid items-center gap-12 pt-12 lg:grid-cols-[1fr_26rem] lg:gap-16 lg:pt-20">
+          <div className="enter">
+            <p className="eyebrow text-fg-dim">Built on WebMCP</p>
+
+            <h1 className="display mt-5 text-[46px] leading-[1.04] text-fg sm:text-[58px]">
+              Your agent doesn&apos;t
+              <br />
+              get write access.
+              <br />
+              <span className="text-fg-dim">It gets a pen.</span>
+            </h1>
+
+            <p className="mt-6 max-w-[46ch] text-[15px] leading-[1.6] text-fg-mid">
+              SpecFlow turns a rough brief into requirements, sprints, tasks and
+              estimates. Your agent does the decomposition inside the workspace
+              you already use — but every write tool it has produces a diff, not
+              a change. You read it. You sign it.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/signup"
+                className="press rounded-lg bg-fg px-4 py-2.5 text-[13.5px] font-medium text-ink-900 hover:bg-white"
+              >
+                Start planning
+              </Link>
+              <Link
+                href="/preview"
+                className="press rounded-lg px-4 py-2.5 text-[13.5px] text-fg-mid hover:bg-ink-800 hover:text-fg"
+              >
+                Look around first
+              </Link>
+            </div>
+          </div>
+
+          <div className="enter lg:mt-0">
+            <LandingPatch />
           </div>
         </section>
 
-        <section className="mt-20 grid gap-3 sm:grid-cols-3">
+        {/* Three moves, and they really are a sequence, so they're numbered. */}
+        <section className="mt-28 grid gap-10 sm:grid-cols-3 sm:gap-8">
           {[
             {
-              step: "01",
+              n: "01",
               title: "It reads the room",
-              body: "get_project_context returns the plan and the human's live view — which sprint is open, what's filtered. The agent proposes into context, not into a vacuum.",
+              body: "get_project_context returns the plan and the human's live view — the open sprint, the active filter. The agent proposes into a context, not a vacuum.",
             },
             {
-              step: "02",
-              title: "It proposes a diff",
-              body: "Every write tool authors a change set. Additions, changes and removals render as a real diff in the review panel. Nothing has touched the database yet.",
+              n: "02",
+              title: "It writes a diff",
+              body: "Every write tool authors a change set. Additions, field-level changes, removals. A sprint and the twelve tasks inside it arrive as one reviewable unit.",
             },
             {
-              step: "03",
-              title: "You decide, it hears you",
-              body: "apply_pending_changes opens the diff and blocks until you approve or reject. Your answer — and your reason — goes straight back to the agent.",
+              n: "03",
+              title: "You answer, in-band",
+              body: "apply_pending_changes blocks on your decision. Approve and it lands in one transaction. Reject and your reason goes back as the tool result.",
             },
           ].map((c) => (
-            <article
-              key={c.step}
-              className="rounded-xl border border-line bg-surface p-4"
-            >
-              <span className="font-mono text-[11px] text-agent">{c.step}</span>
-              <h3 className="mt-2 text-[14px] font-medium text-ink">{c.title}</h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-faint">
+            <article key={c.n}>
+              <span className="font-mono text-[11.5px] text-fg-dim">{c.n}</span>
+              <h3 className="display mt-2 text-[19px] text-fg">{c.title}</h3>
+              <p className="mt-2 text-[13.5px] leading-[1.6] text-fg-mid">
                 {c.body}
               </p>
             </article>
           ))}
         </section>
 
-        <section className="mt-14">
-          <h2 className="text-[11px] font-medium uppercase tracking-wider text-ink-faint">
-            The tool surface
-          </h2>
-          <ul className="mt-3 divide-y divide-line-soft rounded-xl border border-line bg-surface">
-            {TOOLS.map(([name, kind, desc]) => (
-              <li key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3">
-                <span className="font-mono text-[12.5px] text-ink">{name}</span>
-                <span className={`font-mono text-[10.5px] uppercase tracking-wide ${TONE[kind]}`}>
-                  {kind}
-                </span>
-                <span className="w-full text-[12.5px] text-ink-faint sm:w-auto sm:flex-1">
-                  {desc}
-                </span>
+        <section className="mt-24">
+          <h2 className="display text-[26px] text-fg">The tool surface</h2>
+          <ul className="mt-6">
+            {TOOLS.map(([name, desc]) => (
+              <li
+                key={name}
+                className="grid gap-x-8 gap-y-1 border-b border-ink-hair py-3.5 last:border-0 sm:grid-cols-[16rem_1fr]"
+              >
+                <span className="font-mono text-[13px] text-fg">{name}</span>
+                <span className="text-[13.5px] text-fg-mid">{desc}</span>
               </li>
             ))}
           </ul>
+          <p className="mt-5 max-w-[62ch] text-[13px] leading-relaxed text-fg-dim">
+            The set changes with the page. The projects list offers
+            <span className="font-mono text-fg-mid"> list_projects </span>
+            and
+            <span className="font-mono text-fg-mid"> create_project </span>
+            instead — which is what <span className="font-mono">toolchange</span>{" "}
+            is for.
+          </p>
         </section>
 
-        <section className="mt-14 rounded-xl border border-line bg-surface p-5">
-          <h2 className="text-[14px] font-medium text-ink">
-            Turning WebMCP on
-          </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-ink-dim">
+        <section className="mt-24 max-w-[62ch]">
+          <h2 className="display text-[26px] text-fg">Turning WebMCP on</h2>
+          <p className="mt-3 text-[13.5px] leading-[1.6] text-fg-mid">
             Open SpecFlow inside ChatGPT&apos;s browser, or in Chrome with the
-            flag enabled:
+            flag enabled. The badge in the header turns on and lists the live
+            tools.
           </p>
-          <ol className="mt-3 space-y-1.5 text-[13px] text-ink-faint">
-            <li>
-              1. Go to{" "}
-              <span className="font-mono text-ink-dim">
-                chrome://flags/#enable-webmcp-testing
-              </span>
-            </li>
-            <li>2. Set it to Enabled and relaunch Chrome.</li>
-            <li>
-              3. Come back — the badge in the header turns orange and lists the
-              live tools.
-            </li>
+          <ol className="mt-5 space-y-2.5">
+            {[
+              ["1", "chrome://flags/#enable-webmcp-testing", true],
+              ["2", "Set it to Enabled, then relaunch Chrome.", false],
+              ["3", "Reload this page.", false],
+            ].map(([n, text, mono]) => (
+              <li key={n as string} className="flex gap-3 text-[13.5px]">
+                <span className="font-mono text-fg-dim">{n as string}</span>
+                <span className={mono ? "font-mono text-[12.5px] text-fg-mid" : "text-fg-mid"}>
+                  {text as string}
+                </span>
+              </li>
+            ))}
           </ol>
         </section>
       </main>

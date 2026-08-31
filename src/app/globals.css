@@ -1,169 +1,198 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- * SpecFlow design system
+ * SpecFlow
  *
- * Monochrome surface + one signal colour.
- *   orange  → the agent channel (proposals, presence, highlight)
- *   emerald → additions in a diff
- *   blue    → modifications in a diff
- *   rose    → removals in a diff
- * Nothing else is coloured. Colour means something here.
+ * The thesis: a project plan is a patch, and an agent's proposal is a
+ * document you sign off on. So the app is built from two materials.
+ *
+ *   INK   — the workspace chrome. Cool, dark, quiet, almost colourless.
+ *           Nothing here competes for attention.
+ *   PAPER — the agent's proposal. A warm off-white sheet with a real
+ *           unified diff on it. The only bright surface in the product,
+ *           and the only place the eye is asked to go.
+ *
+ * There is no brand accent colour in the chrome. The paper *is* the
+ * accent. Colour on the paper means what it means in git: green added,
+ * red removed, blue changed. One amber dot marks "the agent is waiting
+ * on you" and that is the entire palette.
  * ------------------------------------------------------------------ */
 
 @theme {
-  --color-canvas:    #09090b;
-  --color-surface:   #101013;
-  --color-raised:    #17171b;
-  --color-hover:     #1d1d22;
-  --color-line:      #232329;
-  --color-line-soft: #1b1b20;
+  /* --- ink: the workspace ------------------------------------------ */
+  --color-ink-900: #0d1117;
+  --color-ink-850: #11161d;
+  --color-ink-800: #161c24;
+  --color-ink-700: #1c232c;
+  --color-ink-600: #232c36;
+  --color-ink-line: #232b34;
+  --color-ink-hair: #1a212a;
 
-  --color-ink:       #ececef;
-  --color-ink-dim:   #a1a1aa;
-  --color-ink-faint: #6b6b75;
+  --color-fg:       #e6e9ed;
+  --color-fg-mid:   #98a2ae;
+  --color-fg-dim:   #64707e;
 
-  --color-agent:      #ff6b35;
-  --color-agent-dim:  #b8481f;
-  --color-agent-wash: #ff6b350f;
+  /* --- paper: the proposal ----------------------------------------- */
+  --color-paper:      #f7f4ed;
+  --color-paper-warm: #efeae0;
+  --color-paper-line: #ddd6c8;
+  --color-paper-fg:   #1b1f23;
+  --color-paper-mid:  #5c6470;
+  --color-paper-dim:  #8b8578;
 
-  --color-add:    #3fbf7f;
-  --color-mod:    #4a9eff;
-  --color-remove: #f4566a;
+  /* --- diff, on paper ---------------------------------------------- */
+  --color-add:        #12704f;
+  --color-add-wash:   #e2f0e8;
+  --color-remove:     #a4241b;
+  --color-remove-wash:#f7e6e3;
+  --color-change:     #12539e;
+  --color-change-wash:#e4edf8;
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  /* --- the one signal ---------------------------------------------- */
+  --color-waiting: #e0a32e;
 
+  --font-display: var(--font-display), Georgia, serif;
+  --font-ui: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* ease-out for anything entering or leaving; never ease-in. */
   --ease-out-quart: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out-quart: cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root {
   color-scheme: dark;
 }
 
-html {
-  background: var(--color-canvas);
-}
+html { background: var(--color-ink-900); }
 
 body {
-  background: var(--color-canvas);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
+  background: var(--color-ink-900);
+  color: var(--color-fg);
+  font-family: var(--font-ui);
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
 
-::selection {
-  background: color-mix(in oklab, var(--color-agent) 30%, transparent);
-  color: #fff;
+/* Display type is set tight — tracking is size-specific, never one value. */
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 20, "WONK" 1;
+  font-weight: 500;
+  letter-spacing: -0.018em;
+  line-height: 1.08;
 }
 
-/* Scrollbars: present but quiet. */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-line) transparent;
+.eyebrow {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
-*::-webkit-scrollbar { width: 8px; height: 8px; }
+
+::selection { background: #e0a32e44; }
+
+* { scrollbar-width: thin; scrollbar-color: var(--color-ink-600) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb {
-  background: var(--color-line);
-  border-radius: 999px;
-}
-*::-webkit-scrollbar-thumb:hover { background: #2e2e36; }
+*::-webkit-scrollbar-thumb { background: var(--color-ink-600); border-radius: 99px; }
 
-/* ------------------------------------------------------ press feedback */
-/* 160ms ease-out, transform only — GPU, no layout. */
+/* Paper keeps its own scrollbar so it reads as a separate material. */
+.paper { scrollbar-color: var(--color-paper-line) transparent; }
+.paper::-webkit-scrollbar-thumb { background: var(--color-paper-line); }
+
+/* --------------------------------------------------- press feedback */
+/* Feedback lives on pointer-down, not on release. */
 .press {
-  transition: transform 160ms var(--ease-out-quart),
-              background-color 160ms var(--ease-out-quart),
-              border-color 160ms var(--ease-out-quart),
-              color 160ms var(--ease-out-quart);
+  transition: transform 120ms var(--ease-out-quart),
+              background-color 140ms var(--ease-out-quart),
+              border-color 140ms var(--ease-out-quart),
+              color 140ms var(--ease-out-quart),
+              opacity 140ms var(--ease-out-quart);
 }
-.press:active {
-  transform: scale(0.97);
-}
+.press:active { transform: scale(0.975); }
 
-/* --------------------------------------------------- entry transitions */
-/* Transitions retarget mid-flight; keyframes restart. Prefer these. */
-
+/* ----------------------------------------------------- entrances */
+/* Transitions, not keyframes — they retarget mid-flight. */
 .enter {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   transition: opacity 220ms var(--ease-out-quart),
               transform 220ms var(--ease-out-quart);
-  @starting-style {
-    opacity: 0;
-    transform: translateY(6px) scale(0.98);
-  }
+  @starting-style { opacity: 0; transform: translateY(5px); }
 }
 
-.enter-panel {
+/* The sheet materialises rather than fading: blur and scale together, so
+   it reads as a real surface arriving. */
+.sheet-in {
   opacity: 1;
-  transform: translateX(0);
-  transition: opacity 260ms var(--ease-drawer),
-              transform 260ms var(--ease-drawer);
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+  transition: opacity 300ms var(--ease-sheet),
+              transform 300ms var(--ease-sheet),
+              filter 300ms var(--ease-sheet);
   @starting-style {
     opacity: 0;
-    transform: translateX(16px);
+    transform: scale(0.985) translateY(10px);
+    filter: blur(3px);
   }
 }
 
-/* Stagger: 40ms between siblings, decorative only, capped so long
-   lists never feel like they are loading. */
-.stagger > * { animation: sf-rise 260ms var(--ease-out-quart) both; }
-.stagger > *:nth-child(1) { animation-delay: 0ms; }
-.stagger > *:nth-child(2) { animation-delay: 40ms; }
-.stagger > *:nth-child(3) { animation-delay: 80ms; }
-.stagger > *:nth-child(4) { animation-delay: 120ms; }
-.stagger > *:nth-child(5) { animation-delay: 160ms; }
-.stagger > *:nth-child(n+6) { animation-delay: 200ms; }
-
-@keyframes sf-rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+.scrim-in {
+  opacity: 1;
+  transition: opacity 240ms var(--ease-out-quart);
+  @starting-style { opacity: 0; }
 }
 
-/* -------------------------------------------------------- agent pulse */
-/* Rare event (agent takes the floor) → delight is allowed here. */
-@keyframes sf-pulse {
-  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-agent) 55%, transparent); }
-  70%  { box-shadow: 0 0 0 7px color-mix(in oklab, var(--color-agent) 0%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-agent) 0%, transparent); }
+/* Cascade for lists that appear together. Decorative, never blocking. */
+.stagger > * { animation: rise 300ms var(--ease-out-quart) both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms }
+.stagger > *:nth-child(2) { animation-delay: 35ms }
+.stagger > *:nth-child(3) { animation-delay: 70ms }
+.stagger > *:nth-child(4) { animation-delay: 105ms }
+.stagger > *:nth-child(5) { animation-delay: 140ms }
+.stagger > *:nth-child(n+6) { animation-delay: 170ms }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px) }
+  to   { opacity: 1; transform: translateY(0) }
 }
-.agent-pulse { animation: sf-pulse 1.8s var(--ease-out-quart) infinite; }
 
-/* Ring the agent draws around whatever it is talking about. */
-.sf-highlight {
-  position: relative;
-  outline: 1.5px solid var(--color-agent);
-  outline-offset: 2px;
+/* ------------------------------------------------ the waiting dot */
+/* Rare event — the agent has taken the floor — so delight is allowed. */
+@keyframes waiting {
+  0%   { box-shadow: 0 0 0 0 #e0a32e88 }
+  70%  { box-shadow: 0 0 0 6px #e0a32e00 }
+  100% { box-shadow: 0 0 0 0 #e0a32e00 }
+}
+.waiting-dot { animation: waiting 2s var(--ease-out-quart) infinite; }
+
+/* The ring the agent draws around what it is talking about. */
+.pointed-at {
+  outline: 1.5px solid var(--color-waiting);
+  outline-offset: 3px;
   border-radius: 10px;
-  transition: outline-color 400ms var(--ease-out-quart);
 }
 
 /* ------------------------------------------------------------ a11y */
 @media (prefers-reduced-motion: reduce) {
-  .press:active { transform: none; }
-  .enter, .enter-panel {
-    transition: opacity 200ms ease;
-    @starting-style { opacity: 0; transform: none; }
+  .press:active { transform: none }
+  .enter, .sheet-in {
+    transition: opacity 180ms ease;
+    @starting-style { opacity: 0; transform: none; filter: none }
   }
-  .stagger > * { animation: sf-fade 200ms ease both; }
-  .agent-pulse { animation: none; }
-  @keyframes sf-fade { from { opacity: 0 } to { opacity: 1 } }
+  .stagger > * { animation: fade 180ms ease both }
+  .waiting-dot { animation: none }
+  @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
 }
 
-/* Hover effects only where a real pointer exists. */
 @media (hover: hover) and (pointer: fine) {
-  .hover-lift:hover {
-    background: var(--color-hover);
-  }
+  .lift:hover { background: var(--color-ink-700); }
+  .lift-paper:hover { background: var(--color-paper-warm); }
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-agent);
+  outline: 2px solid var(--color-waiting);
   outline-offset: 2px;
   border-radius: 6px;
 }

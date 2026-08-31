@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWebMCP } from "@/webmcp/use-webmcp";
 import type { ToolDescriptor } from "@/webmcp/registry";
 import { WebMCPStatus } from "./review-rail";
-import { Button, Empty, Input, Textarea } from "./ui/primitives";
+import { Button, Empty, Eyebrow, Input, Textarea } from "./ui/primitives";
 import type { Project } from "@/lib/types";
 
 export function ProjectsClient({
@@ -85,7 +85,7 @@ export function ProjectsClient({
           );
           toast.success(`Agent created "${project.name}"`);
           router.push(`/projects/${project.id}`);
-          return `Created project "${project.name}" (id ${project.id}) and opened it. The planning tools — get_project_context, propose_plan, propose_task_changes, apply_pending_changes, focus — are now registered on this page.`;
+          return `Created project "${project.name}" (id ${project.id}) and opened it. The planning tools — get_project_context, propose_plan, propose_changes, apply_pending_changes, focus — are now registered on this page.`;
         },
       },
     ];
@@ -93,28 +93,64 @@ export function ProjectsClient({
   });
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-5 py-10">
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-10 px-6 py-10">
       <header className="flex items-center gap-3">
-        <Link href="/" className="text-[15px] font-medium tracking-tight text-ink">
-          Spec<span className="text-agent">Flow</span>
+        <Link href="/" className="display text-[17px] text-fg">
+          SpecFlow
         </Link>
-        <span className="ml-auto text-[12.5px] text-ink-faint">{email}</span>
-        <WebMCPStatus surface={surface} toolNames={toolNames} />
-        <form
-          action={async () => {
-            await supabase.auth.signOut();
-            router.push("/login");
-            router.refresh();
-          }}
-        >
-          <Button size="sm" variant="ghost" type="submit">
-            Sign out
-          </Button>
-        </form>
+        <div className="ml-auto flex items-center gap-1">
+          <WebMCPStatus surface={surface} toolNames={toolNames} />
+          <span className="px-2 text-[12.5px] text-fg-dim">{email}</span>
+          <form
+            action={async () => {
+              await supabase.auth.signOut();
+              router.push("/login");
+              router.refresh();
+            }}
+          >
+            <Button size="sm" variant="quiet" type="submit">
+              Sign out
+            </Button>
+          </form>
+        </div>
       </header>
 
-      <section className="rounded-xl border border-line bg-surface p-4">
-        <h2 className="text-[13.5px] font-medium text-ink">New project</h2>
+      <section>
+        <h1 className="display text-[30px] text-fg">Projects</h1>
+        <p className="mt-2 max-w-[52ch] text-[13.5px] leading-relaxed text-fg-mid">
+          Open one to give your agent the planning tools. Or let it create the
+          project itself — <span className="font-mono text-[12.5px]">create_project</span>{" "}
+          is registered on this page.
+        </p>
+      </section>
+
+      {projects.length === 0 ? (
+        <Empty
+          title="No projects yet"
+          hint="Name one below, or ask your agent to set it up."
+        />
+      ) : (
+        <ul className="stagger">
+          {projects.map((p) => (
+            <li key={p.id}>
+              <Link
+                href={`/projects/${p.id}`}
+                className="press lift block rounded-xl border-b border-ink-hair px-3 py-4"
+              >
+                <p className="display text-[18px] text-fg">{p.name}</p>
+                {p.description ? (
+                  <p className="mt-1 line-clamp-1 text-[13px] text-fg-dim">
+                    {p.description}
+                  </p>
+                ) : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <section className="mt-auto border-t border-ink-hair pt-6">
+        <Eyebrow>New project</Eyebrow>
         <form
           className="mt-3 space-y-2"
           onSubmit={async (e) => {
@@ -127,7 +163,7 @@ export function ProjectsClient({
               setDescription("");
               router.push(`/projects/${p.id}`);
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Failed");
+              toast.error(err instanceof Error ? err.message : "Could not create the project");
             } finally {
               setBusy(false);
             }
@@ -144,40 +180,10 @@ export function ProjectsClient({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is this project? (optional)"
           />
-          <Button type="submit" variant="primary" disabled={!name.trim() || busy}>
+          <Button type="submit" variant="solid" disabled={!name.trim() || busy}>
             Create
           </Button>
         </form>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-ink-faint">
-          Projects
-        </h2>
-        {projects.length === 0 ? (
-          <Empty
-            title="No projects yet"
-            hint="Create one above, or ask your agent to create it for you."
-          />
-        ) : (
-          <ul className="stagger space-y-1.5">
-            {projects.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/projects/${p.id}`}
-                  className="press hover-lift block rounded-xl border border-line bg-surface px-3.5 py-3"
-                >
-                  <p className="text-[13.5px] font-medium text-ink">{p.name}</p>
-                  {p.description ? (
-                    <p className="mt-0.5 line-clamp-1 text-[12.5px] text-ink-faint">
-                      {p.description}
-                    </p>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
     </main>
   );

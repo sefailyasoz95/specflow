@@ -25,7 +25,7 @@ export function LandingAgent() {
             toolsInsideAProject: [
               "get_project_context",
               "propose_plan",
-              "propose_task_changes",
+              "propose_changes",
               "apply_pending_changes",
               "discard_pending_changes",
               "focus",

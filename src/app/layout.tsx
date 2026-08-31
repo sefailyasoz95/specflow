@@ -1,15 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Archivo, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+/* Three faces, three jobs.
+   Fraunces carries the voice of the document — the agent's proposal reads
+   as something written, not emitted. Archivo runs the chrome. Plex Mono is
+   the patch: this product's content is, literally, a diff. */
+const display = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  axes: ["SOFT", "WONK", "opsz"],
+});
+
+const ui = Archivo({
+  variable: "--font-ui",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const mono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
 
 export const metadata: Metadata = {
   title: "SpecFlow — plan software with your agent, not for it",
   description:
-    "SpecFlow turns rough requirements into a structured project plan. Agents propose the plan through WebMCP; you approve the diff.",
+    "SpecFlow turns rough requirements into a structured project plan. Agents propose the plan through WebMCP as a reviewable diff; you approve it.",
 };
 
 export default function RootLayout({
@@ -20,18 +39,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${display.variable} ${ui.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         {children}
         <Toaster
-          theme="dark"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "#17171b",
-              border: "1px solid #232329",
-              color: "#ececef",
+              background: "#F7F4ED",
+              border: "none",
+              color: "#1B1F23",
+              fontFamily: "var(--font-ui)",
+              fontSize: "13px",
             },
           }}
         />

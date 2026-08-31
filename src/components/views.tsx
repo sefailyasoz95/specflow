@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { useWorkspace } from "@/store/workspace";
-import { Badge, Button, Empty, Input } from "./ui/primitives";
+import { Button, Empty, Eyebrow, Fact, Input } from "./ui/primitives";
 import { cn, hours } from "@/lib/utils";
 import { TASK_STATUSES, TASK_STATUS_LABEL, type TaskStatus } from "@/lib/types";
 
-/* ------------------------------------------------------------------ board */
+/* ---------------------------------------------------------------- board */
 
 export function Board() {
   const ws = useWorkspace();
-  const { tasks, sprints, ui, highlight, updateTaskDirect, createTaskDirect } = ws;
+  const { tasks, sprints, requirements, ui, highlight, updateTaskDirect, createTaskDirect } = ws;
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<TaskStatus | null>(null);
   const [draft, setDraft] = useState("");
@@ -22,29 +22,123 @@ export function Board() {
     return true;
   });
 
-  const activeSprint = sprints.find((s) => s.id === ui.activeSprintId);
-  const totalHours = visible.reduce((s, t) => s + (t.estimate_hours ?? 0), 0);
+  const sprint = sprints.find((s) => s.id === ui.activeSprintId);
+  const estimated = visible.reduce((s, t) => s + (t.estimate_hours ?? 0), 0);
+  const unestimated = visible.filter((t) => t.estimate_hours == null).length;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 px-1 pb-3">
-        <div>
-          <h2 className="text-[15px] font-medium text-ink">
-            {activeSprint?.name ??
+      <header className="flex items-end gap-5 pb-5">
+        <div className="min-w-0">
+          <h2 className="display text-[26px] text-fg">
+            {sprint?.name ??
               (ui.activeSprintId === "__backlog__" ? "Backlog" : "All work")}
           </h2>
-          {activeSprint?.goal ? (
-            <p className="mt-0.5 text-[12.5px] text-ink-faint">{activeSprint.goal}</p>
+          {sprint?.goal ? (
+            <p className="mt-1.5 max-w-[52ch] text-[13.5px] leading-relaxed text-fg-mid">
+              {sprint.goal}
+            </p>
           ) : null}
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Badge tone="muted">{visible.length} tasks</Badge>
-          <Badge tone="muted">{hours(totalHours)}</Badge>
-        </div>
+
+        <dl className="ml-auto flex shrink-0 items-end gap-6">
+          <div className="text-right">
+            <dd className="font-mono text-[19px] tabular-nums text-fg">
+              {visible.length}
+            </dd>
+            <dt className="eyebrow mt-0.5 text-fg-dim">tasks</dt>
+          </div>
+          <div className="text-right">
+            <dd className="font-mono text-[19px] tabular-nums text-fg">
+              {hours(estimated)}
+            </dd>
+            <dt className="eyebrow mt-0.5 text-fg-dim">estimated</dt>
+          </div>
+          {unestimated > 0 ? (
+            <div className="text-right">
+              <dd className="font-mono text-[19px] tabular-nums text-waiting">
+                {unestimated}
+              </dd>
+              <dt className="eyebrow mt-0.5 text-fg-dim">unsized</dt>
+            </div>
+          ) : null}
+        </dl>
+      </header>
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-6 overflow-y-auto pb-3 sm:grid-cols-2 xl:grid-cols-4">
+        {TASK_STATUSES.map((status) => {
+          const col = visible.filter((t) => t.status === status);
+          return (
+            <section
+              key={status}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setOverCol(status);
+              }}
+              onDragLeave={() => setOverCol((c) => (c === status ? null : c))}
+              onDrop={async () => {
+                setOverCol(null);
+                if (dragId) await updateTaskDirect(dragId, { status });
+                setDragId(null);
+              }}
+              className={cn(
+                "flex min-h-32 flex-col rounded-xl transition-colors duration-150",
+                overCol === status ? "bg-ink-850" : "bg-transparent"
+              )}
+            >
+              <header className="mb-2.5 flex items-baseline gap-2 border-b border-ink-hair px-1 pb-2">
+                <span className="text-[12.5px] font-medium text-fg-mid">
+                  {TASK_STATUS_LABEL[status]}
+                </span>
+                <Fact className="ml-auto">{col.length}</Fact>
+              </header>
+
+              <ul className="stagger space-y-1.5">
+                {col.map((t) => {
+                  const pointedAt =
+                    highlight?.kind === "task" && highlight.id === t.id;
+                  const req = requirements.find((r) => r.id === t.requirement_id);
+                  return (
+                    <li
+                      key={t.id}
+                      draggable
+                      onDragStart={() => setDragId(t.id)}
+                      onDragEnd={() => setDragId(null)}
+                      className={cn(
+                        "lift press cursor-grab rounded-lg bg-ink-800 px-3 py-2.5 active:cursor-grabbing",
+                        pointedAt && "pointed-at",
+                        dragId === t.id && "opacity-40"
+                      )}
+                    >
+                      <p className="text-[13.5px] leading-[1.35] text-fg">
+                        {t.title}
+                      </p>
+                      <div className="mt-2 flex items-baseline gap-2.5">
+                        {req ? <Fact>{req.code}</Fact> : null}
+                        <Fact
+                          className={cn(
+                            "ml-auto",
+                            t.estimate_hours == null && "text-waiting/70"
+                          )}
+                        >
+                          {t.estimate_hours == null ? "unsized" : hours(t.estimate_hours)}
+                        </Fact>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {col.length === 0 ? (
+                <p className="px-1 py-2 font-mono text-[12px] text-fg-dim/50">—</p>
+              ) : null}
+            </section>
+          );
+        })}
       </div>
 
       <form
-        className="flex gap-2 px-1 pb-3"
+        className="flex gap-2 border-t border-ink-hair pt-3"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draft.trim()) return;
@@ -68,90 +162,17 @@ export function Board() {
           Add
         </Button>
       </form>
-
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto pb-2 sm:grid-cols-2 xl:grid-cols-4">
-        {TASK_STATUSES.map((status) => {
-          const col = visible.filter((t) => t.status === status);
-          return (
-            <section
-              key={status}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setOverCol(status);
-              }}
-              onDragLeave={() => setOverCol((c) => (c === status ? null : c))}
-              onDrop={async () => {
-                setOverCol(null);
-                if (dragId) await updateTaskDirect(dragId, { status });
-                setDragId(null);
-              }}
-              className={cn(
-                "flex min-h-40 flex-col rounded-xl border bg-surface/60 p-2 transition-colors duration-150",
-                overCol === status
-                  ? "border-agent/50 bg-agent/[0.04]"
-                  : "border-line"
-              )}
-            >
-              <header className="flex items-center gap-2 px-1.5 pb-2">
-                <span className="text-[12px] font-medium text-ink-dim">
-                  {TASK_STATUS_LABEL[status]}
-                </span>
-                <span className="font-mono text-[11px] text-ink-faint">
-                  {col.length}
-                </span>
-              </header>
-
-              <ul className="stagger space-y-1.5">
-                {col.map((t) => {
-                  const ringed = highlight?.kind === "task" && highlight.id === t.id;
-                  return (
-                    <li
-                      key={t.id}
-                      draggable
-                      onDragStart={() => setDragId(t.id)}
-                      onDragEnd={() => setDragId(null)}
-                      className={cn(
-                        "hover-lift press cursor-grab rounded-lg border bg-raised px-2.5 py-2 active:cursor-grabbing",
-                        ringed ? "border-agent sf-highlight" : "border-line",
-                        dragId === t.id && "opacity-50"
-                      )}
-                    >
-                      <p className="text-[13px] leading-snug text-ink">{t.title}</p>
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        {t.estimate_hours != null ? (
-                          <Badge tone="muted">{hours(t.estimate_hours)}</Badge>
-                        ) : (
-                          <Badge tone="muted">no estimate</Badge>
-                        )}
-                        {ui.activeSprintId === null && t.sprint_id ? (
-                          <span className="truncate text-[11px] text-ink-faint">
-                            {sprints.find((s) => s.id === t.sprint_id)?.name}
-                          </span>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              {col.length === 0 ? (
-                <p className="px-1.5 py-3 text-[12px] text-ink-faint">—</p>
-              ) : null}
-            </section>
-          );
-        })}
-      </div>
     </div>
   );
 }
 
-/* ----------------------------------------------------------- requirements */
+/* --------------------------------------------------------- requirements */
 
-const PRIORITY_TONE = {
-  low: "muted",
-  medium: "neutral",
-  high: "mod",
-  critical: "remove",
+const PRIORITY_STYLE = {
+  low: "text-fg-dim",
+  medium: "text-fg-mid",
+  high: "text-waiting",
+  critical: "text-rose-400",
 } as const;
 
 export function RequirementsView() {
@@ -160,10 +181,65 @@ export function RequirementsView() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <h2 className="px-1 pb-3 text-[15px] font-medium text-ink">Requirements</h2>
+      <header className="pb-5">
+        <h2 className="display text-[26px] text-fg">Requirements</h2>
+        <p className="mt-1.5 text-[13.5px] text-fg-mid">
+          What the system has to do, before anyone argues about how.
+        </p>
+      </header>
+
+      {requirements.length === 0 ? (
+        <Empty
+          title="Nothing captured yet"
+          hint="Paste a rough brief to your agent and let it propose the structure."
+        />
+      ) : (
+        <ul className="stagger min-h-0 flex-1 overflow-y-auto pb-3">
+          {requirements.map((r) => {
+            const linked = tasks.filter((t) => t.requirement_id === r.id);
+            const done = linked.filter((t) => t.status === "done").length;
+            const pointedAt =
+              highlight?.kind === "requirement" && highlight.id === r.id;
+            return (
+              <li
+                key={r.id}
+                className={cn(
+                  "lift grid grid-cols-[4.5rem_1fr_auto] items-baseline gap-x-4 rounded-lg border-b border-ink-hair px-2 py-3.5 last:border-0",
+                  pointedAt && "pointed-at"
+                )}
+              >
+                <Fact className="pt-0.5">{r.code}</Fact>
+
+                <div className="min-w-0">
+                  <p className="text-[14.5px] leading-snug text-fg">{r.title}</p>
+                  {r.description ? (
+                    <p className="mt-1 max-w-[62ch] text-[12.5px] leading-relaxed text-fg-dim">
+                      {r.description}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex shrink-0 items-baseline gap-4">
+                  <span
+                    className={cn(
+                      "font-mono text-[11px]",
+                      PRIORITY_STYLE[r.priority]
+                    )}
+                  >
+                    {r.priority}
+                  </span>
+                  <Fact className="w-12 text-right">
+                    {linked.length ? `${done}/${linked.length}` : "—"}
+                  </Fact>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <form
-        className="flex gap-2 px-1 pb-3"
+        className="flex gap-2 border-t border-ink-hair pt-3"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draft.trim()) return;
@@ -181,51 +257,11 @@ export function RequirementsView() {
           Add
         </Button>
       </form>
-
-      {requirements.length === 0 ? (
-        <Empty
-          title="No requirements captured"
-          hint="Paste a rough brief to your agent and let it propose the structure."
-        />
-      ) : (
-        <ul className="stagger min-h-0 flex-1 space-y-1.5 overflow-y-auto pb-2">
-          {requirements.map((r) => {
-            const linked = tasks.filter((t) => t.requirement_id === r.id);
-            const ringed =
-              highlight?.kind === "requirement" && highlight.id === r.id;
-            return (
-              <li
-                key={r.id}
-                className={cn(
-                  "hover-lift rounded-xl border bg-surface px-3 py-2.5",
-                  ringed ? "border-agent sf-highlight" : "border-line"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] text-ink-faint">
-                    {r.code}
-                  </span>
-                  <Badge tone={PRIORITY_TONE[r.priority]}>{r.priority}</Badge>
-                  <span className="ml-auto font-mono text-[11px] text-ink-faint">
-                    {linked.length} tasks
-                  </span>
-                </div>
-                <p className="mt-1 text-[13.5px] text-ink">{r.title}</p>
-                {r.description ? (
-                  <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">
-                    {r.description}
-                  </p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      )}
     </div>
   );
 }
 
-/* ---------------------------------------------------------------- sprints */
+/* -------------------------------------------------------------- sprints */
 
 export function SprintsView() {
   const { sprints, tasks, highlight, setUi, createSprintDirect } = useWorkspace();
@@ -233,10 +269,69 @@ export function SprintsView() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <h2 className="px-1 pb-3 text-[15px] font-medium text-ink">Sprints</h2>
+      <header className="pb-5">
+        <h2 className="display text-[26px] text-fg">Sprints</h2>
+        <p className="mt-1.5 text-[13.5px] text-fg-mid">
+          The sequence. Where the argument about order actually lives.
+        </p>
+      </header>
+
+      {sprints.length === 0 ? (
+        <Empty
+          title="No sprints yet"
+          hint="Ask your agent to shape the work into a sequence."
+        />
+      ) : (
+        <ul className="stagger min-h-0 flex-1 space-y-1 overflow-y-auto pb-3">
+          {sprints.map((s) => {
+            const inSprint = tasks.filter((t) => t.sprint_id === s.id);
+            const done = inSprint.filter((t) => t.status === "done").length;
+            const est = inSprint.reduce((sum, t) => sum + (t.estimate_hours ?? 0), 0);
+            const pointedAt = highlight?.kind === "sprint" && highlight.id === s.id;
+            const pct = inSprint.length ? (done / inSprint.length) * 100 : 0;
+
+            return (
+              <li key={s.id}>
+                <button
+                  onClick={() => setUi({ view: "board", activeSprintId: s.id })}
+                  className={cn(
+                    "press lift w-full rounded-xl px-3 py-3.5 text-left",
+                    pointedAt && "pointed-at"
+                  )}
+                >
+                  <div className="flex items-baseline gap-3">
+                    <h3 className="display text-[18px] text-fg">{s.name}</h3>
+                    {s.status === "active" ? (
+                      <span className="eyebrow text-waiting">active</span>
+                    ) : (
+                      <span className="eyebrow text-fg-dim">{s.status}</span>
+                    )}
+                    <Fact tone="mid" className="ml-auto">
+                      {done}/{inSprint.length} · {hours(est)}
+                    </Fact>
+                  </div>
+
+                  {s.goal ? (
+                    <p className="mt-1 max-w-[62ch] text-[13px] leading-relaxed text-fg-mid">
+                      {s.goal}
+                    </p>
+                  ) : null}
+
+                  <div className="mt-3 h-px w-full bg-ink-line">
+                    <div
+                      className="h-px bg-fg-mid transition-[width] duration-300 ease-out"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <form
-        className="flex gap-2 px-1 pb-3"
+        className="flex gap-2 border-t border-ink-hair pt-3"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draft.trim()) return;
@@ -254,51 +349,8 @@ export function SprintsView() {
           Add
         </Button>
       </form>
-
-      {sprints.length === 0 ? (
-        <Empty title="No sprints yet" hint="Ask the agent to shape the plan into sprints." />
-      ) : (
-        <ul className="stagger min-h-0 flex-1 space-y-1.5 overflow-y-auto pb-2">
-          {sprints.map((s) => {
-            const inSprint = tasks.filter((t) => t.sprint_id === s.id);
-            const done = inSprint.filter((t) => t.status === "done").length;
-            const est = inSprint.reduce((sum, t) => sum + (t.estimate_hours ?? 0), 0);
-            const ringed = highlight?.kind === "sprint" && highlight.id === s.id;
-            const pct = inSprint.length ? (done / inSprint.length) * 100 : 0;
-
-            return (
-              <li key={s.id}>
-                <button
-                  onClick={() => setUi({ view: "board", activeSprintId: s.id })}
-                  className={cn(
-                    "press hover-lift w-full rounded-xl border bg-surface px-3 py-2.5 text-left",
-                    ringed ? "border-agent sf-highlight" : "border-line"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-medium text-ink">{s.name}</span>
-                    <Badge tone={s.status === "active" ? "add" : "muted"}>
-                      {s.status}
-                    </Badge>
-                    <span className="ml-auto font-mono text-[11px] text-ink-faint">
-                      {done}/{inSprint.length} · {hours(est)}
-                    </span>
-                  </div>
-                  {s.goal ? (
-                    <p className="mt-1 text-[12.5px] text-ink-faint">{s.goal}</p>
-                  ) : null}
-                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-line">
-                    <div
-                      className="h-full rounded-full bg-add transition-[width] duration-300 ease-out"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
     </div>
   );
 }
+
+export { Eyebrow };

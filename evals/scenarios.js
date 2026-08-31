@@ -66,7 +66,7 @@
         for (const required of [
           "get_project_context",
           "propose_plan",
-          "propose_task_changes",
+          "propose_changes",
           "apply_pending_changes",
           "discard_pending_changes",
           "focus",
@@ -186,9 +186,11 @@
     {
       name: "unknown task ids are refused, not silently proposed",
       async run() {
-        const result = await call("propose_task_changes", {
+        const result = await call("propose_changes", {
           title: "[eval] bad ids",
-          update: [{ taskId: "00000000-0000-0000-0000-000000000000", status: "done" }],
+          updateTasks: [
+            { taskId: "00000000-0000-0000-0000-000000000000", status: "done" },
+          ],
         });
         if (!/do not exist/i.test(result)) {
           throw new Error(`expected a validation error, got: ${result}`);

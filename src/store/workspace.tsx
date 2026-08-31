@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { applyOpsLocally } from "@/lib/apply-local";
 import type {
   ChangeSet,
   Op,
@@ -104,9 +105,12 @@ export function useWorkspace() {
 
 export function WorkspaceProvider({
   initial,
+  offline = false,
   children,
 }: {
   initial: Snapshot;
+  /** Preview surface: run the whole review loop in memory, no database. */
+  offline?: boolean;
   children: React.ReactNode;
 }) {
   const supabase = useMemo(() => createClient(), []);
@@ -159,6 +163,7 @@ export function WorkspaceProvider({
   const projectId = snapshot.project.id;
 
   const refresh = useCallback(async () => {
+    if (offline) return;
     setLoading(true);
     const [reqs, sprints, tasks, changeSets] = await Promise.all([
       supabase.from("requirements").select("*").eq("project_id", projectId).order("position"),
@@ -183,11 +188,12 @@ export function WorkspaceProvider({
     snapshotRef.current = next;
     setSnapshot(next);
     setLoading(false);
-  }, [supabase, projectId]);
+  }, [supabase, projectId, offline]);
 
   // Realtime: an agent may be driving this page from another tab, and the
   // apply happens in Postgres. Keep the human's view honest either way.
   useEffect(() => {
+    if (offline) return;
     const channel = supabase
       .channel(`project:${projectId}`)
       .on(
@@ -204,10 +210,31 @@ export function WorkspaceProvider({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [supabase, projectId, refresh]);
+  }, [supabase, projectId, refresh, offline]);
 
   const proposeChangeSet = useCallback(
     async (title: string, summary: string, operations: Op[]) => {
+      if (offline) {
+        const cs: ChangeSet = {
+          id: crypto.randomUUID(),
+          project_id: projectId,
+          title,
+          summary,
+          source: "agent",
+          status: "pending",
+          operations,
+          created_at: new Date().toISOString(),
+          resolved_at: null,
+        };
+        setSnapshot((prev) => {
+          const next = { ...prev, changeSets: [cs, ...prev.changeSets] };
+          snapshotRef.current = next;
+          return next;
+        });
+        setUi({ openProposalId: cs.id });
+        setHighlight({ kind: "changeset", id: cs.id });
+        return cs;
+      }
       const { data, error } = await supabase
         .from("change_sets")
         .insert({
@@ -227,11 +254,34 @@ export function WorkspaceProvider({
       setHighlight({ kind: "changeset", id: cs.id });
       return cs;
     },
-    [supabase, projectId, refresh, setUi, setHighlight]
+    [supabase, projectId, refresh, setUi, setHighlight, offline]
   );
 
   const applyChangeSet = useCallback(
     async (id: string) => {
+      if (offline) {
+        const cs = snapshotRef.current.changeSets.find((c) => c.id === id);
+        if (!cs) return 0;
+        const { next, applied } = applyOpsLocally(
+          projectId,
+          snapshotRef.current,
+          cs.operations
+        );
+        setSnapshot((prev) => {
+          const merged: Snapshot = {
+            ...prev,
+            ...next,
+            changeSets: prev.changeSets.map((c) =>
+              c.id === id
+                ? { ...c, status: "applied" as const, resolved_at: new Date().toISOString() }
+                : c
+            ),
+          };
+          snapshotRef.current = merged;
+          return merged;
+        });
+        return applied;
+      }
       const { data, error } = await supabase.rpc("apply_change_set", {
         p_change_set_id: id,
       });
@@ -240,11 +290,26 @@ export function WorkspaceProvider({
       const applied = (data as { applied?: number } | null)?.applied ?? 0;
       return applied;
     },
-    [supabase, refresh]
+    [supabase, refresh, projectId, offline]
   );
 
   const discardChangeSet = useCallback(
     async (id: string) => {
+      if (offline) {
+        setSnapshot((prev) => {
+          const next: Snapshot = {
+            ...prev,
+            changeSets: prev.changeSets.map((c) =>
+              c.id === id
+                ? { ...c, status: "discarded" as const, resolved_at: new Date().toISOString() }
+                : c
+            ),
+          };
+          snapshotRef.current = next;
+          return next;
+        });
+        return;
+      }
       const { error } = await supabase
         .from("change_sets")
         .update({ status: "discarded", resolved_at: new Date().toISOString() })
@@ -252,11 +317,28 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, refresh]
+    [supabase, refresh, offline]
   );
 
   const createTaskDirect = useCallback(
     async (input: Partial<Task> & { title: string }) => {
+      if (offline) {
+        const { next } = applyOpsLocally(projectId, snapshotRef.current, [
+          {
+            op: "create_task",
+            title: input.title,
+            status: input.status ?? "backlog",
+            estimateHours: input.estimate_hours ?? undefined,
+            sprintRef: input.sprint_id ?? null,
+          },
+        ]);
+        setSnapshot((prev) => {
+          const merged = { ...prev, ...next };
+          snapshotRef.current = merged;
+          return merged;
+        });
+        return;
+      }
       const { error } = await supabase.from("tasks").insert({
         project_id: projectId,
         position: snapshot.tasks.length + 1,
@@ -265,7 +347,7 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, projectId, snapshot.tasks.length, refresh]
+    [supabase, projectId, snapshot.tasks.length, refresh, offline]
   );
 
   const updateTaskDirect = useCallback(
@@ -275,26 +357,39 @@ export function WorkspaceProvider({
         ...prev,
         tasks: prev.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
       }));
+      if (offline) return;
       const { error } = await supabase.from("tasks").update(patch).eq("id", id);
       if (error) {
         await refresh();
         throw new Error(error.message);
       }
     },
-    [supabase, refresh]
+    [supabase, refresh, offline]
   );
 
   const deleteTaskDirect = useCallback(
     async (id: string) => {
       setSnapshot((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== id) }));
+      if (offline) return;
       const { error } = await supabase.from("tasks").delete().eq("id", id);
       if (error) await refresh();
     },
-    [supabase, refresh]
+    [supabase, refresh, offline]
   );
 
   const createSprintDirect = useCallback(
     async (name: string, goal?: string) => {
+      if (offline) {
+        const { next } = applyOpsLocally(projectId, snapshotRef.current, [
+          { op: "create_sprint", name, goal },
+        ]);
+        setSnapshot((prev) => {
+          const merged = { ...prev, ...next };
+          snapshotRef.current = merged;
+          return merged;
+        });
+        return;
+      }
       const { error } = await supabase.from("sprints").insert({
         project_id: projectId,
         name,
@@ -304,11 +399,22 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, projectId, snapshot.sprints.length, refresh]
+    [supabase, projectId, snapshot.sprints.length, refresh, offline]
   );
 
   const createRequirementDirect = useCallback(
     async (title: string, description?: string) => {
+      if (offline) {
+        const { next } = applyOpsLocally(projectId, snapshotRef.current, [
+          { op: "create_requirement", title, description },
+        ]);
+        setSnapshot((prev) => {
+          const merged = { ...prev, ...next };
+          snapshotRef.current = merged;
+          return merged;
+        });
+        return;
+      }
       const seq = snapshot.requirements.length + 1;
       const { error } = await supabase.from("requirements").insert({
         project_id: projectId,
@@ -320,7 +426,7 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, projectId, snapshot.requirements.length, refresh]
+    [supabase, projectId, snapshot.requirements.length, refresh, offline]
   );
 
 

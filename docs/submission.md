@@ -66,7 +66,7 @@ vendor — inherits that safety by using the tools.
 ### The WebMCP implementation
 
 Six tools inside a project (`get_project_context`, `propose_plan`,
-`propose_task_changes`, `apply_pending_changes`, `discard_pending_changes`,
+`propose_changes`, `apply_pending_changes`, `discard_pending_changes`,
 `focus`), plus page-scoped sets on the landing and project-list pages — the
 tool surface changes as the human navigates, which is what `toolchange` is for.
 

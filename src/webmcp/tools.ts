@@ -1,7 +1,13 @@
 "use client";
 
 import type { ToolDescriptor } from "./registry";
-import type { Op, Priority, TaskStatus } from "@/lib/types";
+import type {
+  Op,
+  Priority,
+  RequirementStatus,
+  SprintStatus,
+  TaskStatus,
+} from "@/lib/types";
 import type { UiState, WorkspaceValue } from "@/store/workspace";
 
 const PRIORITIES: Priority[] = ["low", "medium", "high", "critical"];
@@ -264,17 +270,17 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
 
     /* ------------------------------------------------- granular edits */
     {
-      name: "propose_task_changes",
+      name: "propose_changes",
       description:
-        "Propose edits to tasks that already exist: retitle, re-estimate, change status, move between sprints, or delete. Also accepts brand new tasks for an existing sprint. Everything lands in one reviewable change set. Use get_project_context first to get real task ids.",
+        "Propose edits to things that already exist: retitle or re-estimate a task, move it between sprints, change its status, delete it, reprioritise a requirement, or mark a sprint active or done. Also accepts brand new tasks for an existing sprint. Everything lands in one reviewable change set. Call get_project_context first — these take real ids.",
       inputSchema: {
         type: "object",
         properties: {
-          title: str("Short name for this change set, e.g. 'Re-estimate sprint 2'"),
+          title: str("Short name for this change set, e.g. 'Re-cut sprint 2'"),
           summary: str("Why these changes."),
-          create: {
+          createTasks: {
             type: "array",
-            description: "New tasks.",
+            description: "New tasks for sprints that already exist.",
             items: {
               type: "object",
               properties: {
@@ -288,7 +294,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
               required: ["title"],
             },
           },
-          update: {
+          updateTasks: {
             type: "array",
             description: "Edits to existing tasks.",
             items: {
@@ -299,32 +305,90 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
                 description: str("New description."),
                 status: { type: "string", enum: STATUSES },
                 estimateHours: num("New estimate in hours."),
-                sprintId: str("Move to this sprint id. Pass an empty string to move to backlog."),
+                sprintId: str(
+                  "Move to this sprint id. Pass an empty string to move it to the backlog."
+                ),
               },
               required: ["taskId"],
             },
           },
-          remove: {
+          deleteTasks: {
             type: "array",
             description: "Ids of tasks to delete.",
             items: { type: "string" },
+          },
+          updateRequirements: {
+            type: "array",
+            description: "Edits to existing requirements.",
+            items: {
+              type: "object",
+              properties: {
+                requirementId: str("Existing requirement id."),
+                title: str("New title."),
+                description: str("New description."),
+                priority: { type: "string", enum: PRIORITIES },
+                status: {
+                  type: "string",
+                  enum: ["draft", "approved", "implemented"],
+                },
+              },
+              required: ["requirementId"],
+            },
+          },
+          updateSprints: {
+            type: "array",
+            description: "Edits to existing sprints.",
+            items: {
+              type: "object",
+              properties: {
+                sprintId: str("Existing sprint id."),
+                name: str("New name."),
+                goal: str("New goal."),
+                status: { type: "string", enum: ["planned", "active", "done"] },
+              },
+              required: ["sprintId"],
+            },
           },
         },
         required: ["title"],
       },
       execute: async (input) => {
-        const creates = (input.create ?? []) as Array<Record<string, unknown>>;
-        const updates = (input.update ?? []) as Array<Record<string, unknown>>;
-        const removes = (input.remove ?? []) as string[];
+        const creates = (input.createTasks ?? []) as Array<Record<string, unknown>>;
+        const updates = (input.updateTasks ?? []) as Array<Record<string, unknown>>;
+        const removes = (input.deleteTasks ?? []) as string[];
+        const reqUpdates = (input.updateRequirements ?? []) as Array<
+          Record<string, unknown>
+        >;
+        const sprintUpdates = (input.updateSprints ?? []) as Array<
+          Record<string, unknown>
+        >;
 
-        const known = new Set(tasks.map((t) => t.id));
-        const unknown = [...updates.map((u) => String(u.taskId)), ...removes].filter(
-          (id) => !known.has(id)
-        );
+        // Catch hallucinated ids here, where the agent can still recover,
+        // rather than half way through applying a change set.
+        const unknown: string[] = [];
+        const taskIds = new Set(tasks.map((t) => t.id));
+        const reqIds = new Set(requirements.map((r) => r.id));
+        const sprintIds = new Set(sprints.map((s) => s.id));
+
+        for (const id of [...updates.map((u) => String(u.taskId)), ...removes]) {
+          if (!taskIds.has(id)) unknown.push(`task ${id}`);
+        }
+        for (const u of reqUpdates) {
+          if (!reqIds.has(String(u.requirementId)))
+            unknown.push(`requirement ${String(u.requirementId)}`);
+        }
+        for (const u of sprintUpdates) {
+          if (!sprintIds.has(String(u.sprintId)))
+            unknown.push(`sprint ${String(u.sprintId)}`);
+        }
+        for (const c of creates) {
+          if (c.sprintId && !sprintIds.has(String(c.sprintId)))
+            unknown.push(`sprint ${String(c.sprintId)}`);
+        }
         if (unknown.length) {
-          return `Error: these task ids do not exist in this project: ${unknown.join(
+          return `Error: these ids do not exist in this project: ${unknown.join(
             ", "
-          )}. Call get_project_context to get current ids.`;
+          )}. Call get_project_context to get current ids. Nothing was proposed.`;
         }
 
         const ops: Op[] = [
@@ -349,24 +413,41 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             sprintRef:
               u.sprintId === undefined ? undefined : String(u.sprintId) || null,
           })),
+          ...reqUpdates.map<Op>((u) => ({
+            op: "update_requirement",
+            requirementId: String(u.requirementId),
+            title: u.title ? String(u.title) : undefined,
+            description: u.description ? String(u.description) : undefined,
+            priority: u.priority as Priority | undefined,
+            status: u.status as RequirementStatus | undefined,
+          })),
+          ...sprintUpdates.map<Op>((u) => ({
+            op: "update_sprint",
+            sprintId: String(u.sprintId),
+            name: u.name ? String(u.name) : undefined,
+            goal: u.goal ? String(u.goal) : undefined,
+            status: u.status as SprintStatus | undefined,
+          })),
           ...removes.map<Op>((id) => ({ op: "delete_task", taskId: id })),
         ];
 
         if (ops.length === 0) return "Nothing to propose — no changes were given.";
 
         const cs = await proposeChangeSet(
-          String(input.title ?? "Task changes"),
+          String(input.title ?? "Changes"),
           String(input.summary ?? ""),
           ops
         );
         setUi({ openProposalId: cs.id });
         logAgent({
-          tool: "propose_task_changes",
+          tool: "propose_changes",
           kind: "write",
-          detail: `+${creates.length} ~${updates.length} -${removes.length}`,
+          detail: `+${creates.length} ~${
+            updates.length + reqUpdates.length + sprintUpdates.length
+          } -${removes.length}`,
         });
 
-        return `Proposal "${cs.title}" created with ${ops.length} operations, pending human review. Call apply_pending_changes to ask for approval.`;
+        return `Proposal "${cs.title}" created with ${ops.length} operations, pending human review. Call apply_pending_changes to ask them to approve it.`;
       },
     },
 
@@ -387,7 +468,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
       execute: async (input, options) => {
         const pending = livePending();
         if (pending.length === 0) {
-          return "There is no pending change set to apply. Create one with propose_plan or propose_task_changes first.";
+          return "There is no pending change set to apply. Create one with propose_plan or propose_changes first.";
         }
         const target = input.changeSetId
           ? pending.find((c) => c.id === input.changeSetId)

@@ -36,7 +36,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   return (
     <form onSubmit={submit} className="enter w-full max-w-sm space-y-3">
       <div className="space-y-1.5">
-        <label className="text-[12.5px] text-ink-dim" htmlFor="email">
+        <label className="text-[12.5px] text-fg-mid" htmlFor="email">
           Email
         </label>
         <Input
@@ -50,7 +50,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-[12.5px] text-ink-dim" htmlFor="password">
+        <label className="text-[12.5px] text-fg-mid" htmlFor="password">
           Password
         </label>
         <Input
@@ -66,27 +66,27 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </div>
 
       {error ? (
-        <p className="rounded-lg border border-remove/30 bg-remove/10 px-3 py-2 text-[12.5px] text-remove">
+        <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">
           {error}
         </p>
       ) : null}
 
-      <Button type="submit" variant="primary" className="w-full" disabled={busy}>
+      <Button type="submit" variant="solid" className="w-full" disabled={busy}>
         {busy ? "…" : mode === "login" ? "Sign in" : "Create account"}
       </Button>
 
-      <p className="pt-1 text-center text-[12.5px] text-ink-faint">
+      <p className="pt-1 text-center text-[12.5px] text-fg-dim">
         {mode === "login" ? (
           <>
             No account?{" "}
-            <Link href="/signup" className="text-ink-dim underline underline-offset-2 hover:text-ink">
+            <Link href="/signup" className="text-fg-mid underline underline-offset-4 hover:text-fg">
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have one?{" "}
-            <Link href="/login" className="text-ink-dim underline underline-offset-2 hover:text-ink">
+            <Link href="/login" className="text-fg-mid underline underline-offset-4 hover:text-fg">
               Sign in
             </Link>
           </>

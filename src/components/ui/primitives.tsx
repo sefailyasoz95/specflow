@@ -3,64 +3,38 @@
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
-/* Buttons answer within 160ms and press in — the cheapest signal that
-   an interface is alive. */
 export function Button({
-  variant = "default",
+  variant = "ink",
   size = "md",
   className,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "default" | "primary" | "ghost" | "danger" | "agent";
+  variant?: "ink" | "solid" | "quiet" | "paper" | "paper-quiet" | "commit";
   size?: "sm" | "md";
 }) {
   return (
     <button
       className={cn(
-        "press inline-flex items-center justify-center gap-1.5 rounded-lg border font-medium",
+        "press inline-flex items-center justify-center gap-1.5 rounded-lg font-medium",
         "disabled:pointer-events-none disabled:opacity-40",
         size === "sm" ? "h-7 px-2.5 text-[12.5px]" : "h-9 px-3.5 text-[13.5px]",
-        variant === "default" &&
-          "border-line bg-raised text-ink hover:bg-hover",
-        variant === "primary" &&
-          "border-transparent bg-ink text-canvas hover:bg-white",
-        variant === "agent" &&
-          "border-transparent bg-agent text-black hover:brightness-110",
-        variant === "ghost" &&
-          "border-transparent bg-transparent text-ink-dim hover:bg-raised hover:text-ink",
-        variant === "danger" &&
-          "border-line bg-transparent text-remove hover:bg-remove/10",
+        variant === "ink" &&
+          "bg-ink-700 text-fg hover:bg-ink-600",
+        variant === "solid" &&
+          "bg-fg text-ink-900 hover:bg-white",
+        variant === "quiet" &&
+          "text-fg-mid hover:bg-ink-800 hover:text-fg",
+        // On paper, the commit action is the darkest thing on the page.
+        variant === "commit" &&
+          "bg-paper-fg text-paper hover:bg-black",
+        variant === "paper" &&
+          "bg-paper-warm text-paper-fg hover:bg-paper-line",
+        variant === "paper-quiet" &&
+          "text-paper-mid hover:bg-paper-warm hover:text-paper-fg",
         className
       )}
       {...props}
     />
-  );
-}
-
-export function Badge({
-  tone = "neutral",
-  className,
-  children,
-}: {
-  tone?: "neutral" | "agent" | "add" | "mod" | "remove" | "muted";
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[10.5px] uppercase tracking-wide",
-        tone === "neutral" && "border-line bg-raised text-ink-dim",
-        tone === "muted" && "border-transparent bg-transparent text-ink-faint",
-        tone === "agent" && "border-agent/40 bg-agent/10 text-agent",
-        tone === "add" && "border-add/40 bg-add/10 text-add",
-        tone === "mod" && "border-mod/40 bg-mod/10 text-mod",
-        tone === "remove" && "border-remove/40 bg-remove/10 text-remove",
-        className
-      )}
-    >
-      {children}
-    </span>
   );
 }
 
@@ -71,9 +45,26 @@ export function Input({
   return (
     <input
       className={cn(
-        "h-9 w-full rounded-lg border border-line bg-surface px-3 text-[13.5px] text-ink",
-        "placeholder:text-ink-faint",
-        "transition-colors duration-150 focus:border-agent/60 focus:outline-none",
+        "h-9 w-full rounded-lg bg-ink-800 px-3 text-[13.5px] text-fg",
+        "placeholder:text-fg-dim",
+        "transition-colors duration-150 focus:bg-ink-700 focus:outline-none",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export function PaperInput({
+  className,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      className={cn(
+        "h-9 w-full rounded-lg bg-paper-warm px-3 text-[13.5px] text-paper-fg",
+        "placeholder:text-paper-dim",
+        "transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-paper-line",
         className
       )}
       {...props}
@@ -88,9 +79,9 @@ export function Textarea({
   return (
     <textarea
       className={cn(
-        "w-full resize-none rounded-lg border border-line bg-surface px-3 py-2 text-[13.5px] leading-relaxed text-ink",
-        "placeholder:text-ink-faint",
-        "transition-colors duration-150 focus:border-agent/60 focus:outline-none",
+        "w-full resize-none rounded-lg bg-ink-800 px-3 py-2 text-[13.5px] leading-relaxed text-fg",
+        "placeholder:text-fg-dim",
+        "transition-colors duration-150 focus:bg-ink-700 focus:outline-none",
         className
       )}
       {...props}
@@ -98,36 +89,50 @@ export function Textarea({
   );
 }
 
-export function Panel({
+/** Small mono fact: an estimate, a count, a requirement code. */
+export function Fact({
+  className,
+  children,
+  tone = "dim",
+}: {
+  className?: string;
+  tone?: "dim" | "mid" | "paper";
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "font-mono text-[11px] tabular-nums",
+        tone === "dim" && "text-fg-dim",
+        tone === "mid" && "text-fg-mid",
+        tone === "paper" && "text-paper-dim",
+        className
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function Eyebrow({
   className,
   children,
 }: {
   className?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-line bg-surface",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <p className={cn("eyebrow text-fg-dim", className)}>{children}</p>;
 }
 
-export function Empty({
-  title,
-  hint,
-}: {
-  title: string;
-  hint?: string;
-}) {
+export function Empty({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line px-6 py-10 text-center">
-      <p className="text-[13.5px] text-ink-dim">{title}</p>
-      {hint ? <p className="max-w-xs text-[12.5px] text-ink-faint">{hint}</p> : null}
+    <div className="px-1 py-8">
+      <p className="display text-[17px] text-fg-mid">{title}</p>
+      {hint ? (
+        <p className="mt-1.5 max-w-xs text-[13px] leading-relaxed text-fg-dim">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
