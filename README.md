@@ -129,6 +129,25 @@ Open SpecFlow in ChatGPT's browser, or in Chrome:
 
 ---
 
+## Evals
+
+Seven scenarios drive the page's real `ToolDescriptor`s — the same objects
+handed to `registerTool` — through a `window.__webmcp` bridge, so they run
+with or without the Chrome flag. On any project page (or `/preview`):
+
+```js
+const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
+await SpecFlowEvals.run();
+```
+
+They exist because two of them caught real bugs: an agent could not always
+see the proposal it had just written, and `focus` moved the human's view
+without `get_project_context` reporting it — both because a tool call can
+land before React has committed. Tools now read from a ref that is written
+before the state, never from a render closure.
+
+See [evals/README.md](./evals/README.md).
+
 ## Security
 
 - Every table is under row-level security scoped to `auth.uid()`; a user can

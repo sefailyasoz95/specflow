@@ -63,6 +63,7 @@ export type UiState = {
 
 export type WorkspaceValue = Snapshot & {
   ui: UiState;
+  uiRef: React.RefObject<UiState>;
   setUi: (patch: Partial<UiState>) => void;
   highlight: HighlightTarget;
   setHighlight: (t: HighlightTarget) => void;
@@ -118,13 +119,19 @@ export function WorkspaceProvider({
   const [loading, setLoading] = useState(false);
   const [highlight, setHighlightState] = useState<HighlightTarget>(null);
   const [agentEvents, setAgentEvents] = useState<AgentEvent[]>([]);
-  const [ui, setUiState] = useState<UiState>({
+  const initialUi: UiState = {
     view: "board",
     activeSprintId: initial.sprints[0]?.id ?? null,
     statusFilter: "all",
     selectedTaskId: null,
-    openProposalId: initial.changeSets.find((c) => c.status === "pending")?.id ?? null,
-  });
+    openProposalId:
+      initial.changeSets.find((c) => c.status === "pending")?.id ?? null,
+  };
+  const [ui, setUiState] = useState<UiState>(initialUi);
+  /* Same reason as snapshotRef: `focus` and `get_project_context` can be
+     two tool calls in one tick, and the agent's claim to know what the
+     human is looking at is only worth anything if it is current. */
+  const uiRef = useRef<UiState>(initialUi);
 
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -136,14 +143,22 @@ export function WorkspaceProvider({
   );
   const approvalResolver = useRef<((o: ApprovalOutcome) => void) | null>(null);
 
-  // Keep the ref in step with every committed render, including the
-  // optimistic updates that never go through refresh().
-  useEffect(() => {
-    snapshotRef.current = snapshot;
-  }, [snapshot]);
+  /* One writer for both. The ref is the newest truth — a tool can fire
+     before React has committed — and the state is its mirror. Nothing
+     else assigns snapshotRef.current, so a later render can never clobber
+     a newer snapshot with an older one. That race cost an agent the
+     ability to find the proposal it had just written. */
+  const commit = useCallback((update: (prev: Snapshot) => Snapshot) => {
+    const next = update(snapshotRef.current);
+    snapshotRef.current = next;
+    setSnapshot(next);
+    return next;
+  }, []);
 
   const setUi = useCallback((patch: Partial<UiState>) => {
-    setUiState((prev) => ({ ...prev, ...patch }));
+    const next = { ...uiRef.current, ...patch };
+    uiRef.current = next;
+    setUiState(next);
   }, []);
 
   const setHighlight = useCallback((t: HighlightTarget) => {
@@ -183,12 +198,9 @@ export function WorkspaceProvider({
       tasks: (tasks.data ?? []) as Task[],
       changeSets: (changeSets.data ?? []) as ChangeSet[],
     };
-    // Set before the state update so a tool firing in the same tick as the
-    // refresh already sees the new ids.
-    snapshotRef.current = next;
-    setSnapshot(next);
+    commit(() => next);
     setLoading(false);
-  }, [supabase, projectId, offline]);
+  }, [supabase, projectId, offline, commit]);
 
   // Realtime: an agent may be driving this page from another tab, and the
   // apply happens in Postgres. Keep the human's view honest either way.
@@ -226,11 +238,7 @@ export function WorkspaceProvider({
           created_at: new Date().toISOString(),
           resolved_at: null,
         };
-        setSnapshot((prev) => {
-          const next = { ...prev, changeSets: [cs, ...prev.changeSets] };
-          snapshotRef.current = next;
-          return next;
-        });
+        commit((prev) => ({ ...prev, changeSets: [cs, ...prev.changeSets] }));
         setUi({ openProposalId: cs.id });
         setHighlight({ kind: "changeset", id: cs.id });
         return cs;
@@ -254,7 +262,7 @@ export function WorkspaceProvider({
       setHighlight({ kind: "changeset", id: cs.id });
       return cs;
     },
-    [supabase, projectId, refresh, setUi, setHighlight, offline]
+    [supabase, projectId, refresh, setUi, setHighlight, offline, commit]
   );
 
   const applyChangeSet = useCallback(
@@ -267,19 +275,15 @@ export function WorkspaceProvider({
           snapshotRef.current,
           cs.operations
         );
-        setSnapshot((prev) => {
-          const merged: Snapshot = {
-            ...prev,
-            ...next,
-            changeSets: prev.changeSets.map((c) =>
-              c.id === id
-                ? { ...c, status: "applied" as const, resolved_at: new Date().toISOString() }
-                : c
-            ),
-          };
-          snapshotRef.current = merged;
-          return merged;
-        });
+        commit((prev) => ({
+          ...prev,
+          ...next,
+          changeSets: prev.changeSets.map((c) =>
+            c.id === id
+              ? { ...c, status: "applied" as const, resolved_at: new Date().toISOString() }
+              : c
+          ),
+        }));
         return applied;
       }
       const { data, error } = await supabase.rpc("apply_change_set", {
@@ -290,24 +294,20 @@ export function WorkspaceProvider({
       const applied = (data as { applied?: number } | null)?.applied ?? 0;
       return applied;
     },
-    [supabase, refresh, projectId, offline]
+    [supabase, refresh, projectId, offline, commit]
   );
 
   const discardChangeSet = useCallback(
     async (id: string) => {
       if (offline) {
-        setSnapshot((prev) => {
-          const next: Snapshot = {
-            ...prev,
-            changeSets: prev.changeSets.map((c) =>
-              c.id === id
-                ? { ...c, status: "discarded" as const, resolved_at: new Date().toISOString() }
-                : c
-            ),
-          };
-          snapshotRef.current = next;
-          return next;
-        });
+        commit((prev) => ({
+          ...prev,
+          changeSets: prev.changeSets.map((c) =>
+            c.id === id
+              ? { ...c, status: "discarded" as const, resolved_at: new Date().toISOString() }
+              : c
+          ),
+        }));
         return;
       }
       const { error } = await supabase
@@ -317,7 +317,7 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, refresh, offline]
+    [supabase, refresh, offline, commit]
   );
 
   const createTaskDirect = useCallback(
@@ -332,11 +332,7 @@ export function WorkspaceProvider({
             sprintRef: input.sprint_id ?? null,
           },
         ]);
-        setSnapshot((prev) => {
-          const merged = { ...prev, ...next };
-          snapshotRef.current = merged;
-          return merged;
-        });
+        commit((prev) => ({ ...prev, ...next }));
         return;
       }
       const { error } = await supabase.from("tasks").insert({
@@ -347,13 +343,13 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, projectId, snapshot.tasks.length, refresh, offline]
+    [supabase, projectId, snapshot.tasks.length, refresh, offline, commit]
   );
 
   const updateTaskDirect = useCallback(
     async (id: string, patch: Partial<Task>) => {
       // Optimistic — a drag should not wait on a round trip.
-      setSnapshot((prev) => ({
+      commit((prev) => ({
         ...prev,
         tasks: prev.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
       }));
@@ -364,17 +360,17 @@ export function WorkspaceProvider({
         throw new Error(error.message);
       }
     },
-    [supabase, refresh, offline]
+    [supabase, refresh, offline, commit]
   );
 
   const deleteTaskDirect = useCallback(
     async (id: string) => {
-      setSnapshot((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== id) }));
+      commit((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== id) }));
       if (offline) return;
       const { error } = await supabase.from("tasks").delete().eq("id", id);
       if (error) await refresh();
     },
-    [supabase, refresh, offline]
+    [supabase, refresh, offline, commit]
   );
 
   const createSprintDirect = useCallback(
@@ -383,11 +379,7 @@ export function WorkspaceProvider({
         const { next } = applyOpsLocally(projectId, snapshotRef.current, [
           { op: "create_sprint", name, goal },
         ]);
-        setSnapshot((prev) => {
-          const merged = { ...prev, ...next };
-          snapshotRef.current = merged;
-          return merged;
-        });
+        commit((prev) => ({ ...prev, ...next }));
         return;
       }
       const { error } = await supabase.from("sprints").insert({
@@ -399,7 +391,7 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, projectId, snapshot.sprints.length, refresh, offline]
+    [supabase, projectId, snapshot.sprints.length, refresh, offline, commit]
   );
 
   const createRequirementDirect = useCallback(
@@ -408,11 +400,7 @@ export function WorkspaceProvider({
         const { next } = applyOpsLocally(projectId, snapshotRef.current, [
           { op: "create_requirement", title, description },
         ]);
-        setSnapshot((prev) => {
-          const merged = { ...prev, ...next };
-          snapshotRef.current = merged;
-          return merged;
-        });
+        commit((prev) => ({ ...prev, ...next }));
         return;
       }
       const seq = snapshot.requirements.length + 1;
@@ -426,7 +414,7 @@ export function WorkspaceProvider({
       if (error) throw new Error(error.message);
       await refresh();
     },
-    [supabase, projectId, snapshot.requirements.length, refresh, offline]
+    [supabase, projectId, snapshot.requirements.length, refresh, offline, commit]
   );
 
 
@@ -482,6 +470,7 @@ export function WorkspaceProvider({
   const value: WorkspaceValue = {
     ...snapshot,
     ui,
+    uiRef,
     setUi,
     highlight,
     setHighlight,

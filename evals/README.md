@@ -7,19 +7,25 @@ any machine a judge happens to have.
 
 ## Running
 
-1. Open a project page.
-2. Paste `scenarios.js` into the DevTools console.
-3. `await SpecFlowEvals.run()`
+The suite is served with the app, so it runs against any deployment —
+including the live one — without a checkout:
 
-`SpecFlowEvals.run({ only: "approval" })` filters by scenario name.
+```js
+const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
+await SpecFlowEvals.run();
+```
+
+`SpecFlowEvals.run({ only: "approval" })` filters by scenario name. Try it
+on `/preview`, where the whole loop runs in memory and there is nothing to
+clean up afterwards.
 
 ## What they check
 
 | Scenario | The property it protects |
 | --- | --- |
 | tools are registered and self-describing | The surface exists and no tool ships a description too thin for a model to route on. |
-| context reports the human's live view | `focus` really moves the human's screen, and `get_project_context` reports it back — the two halves of shared context. |
-| a proposal writes nothing until approved | **The core invariant.** `propose_plan` must not change a single row. |
+| focus moves the view and context reports it, in the same tick | `focus` really moves the human's screen, and `get_project_context` reports it back — without lagging a render behind. Two tool calls can land in one tick. |
+| a proposal writes nothing, and is visible to the very next call | **The core invariant**, plus the one that nearly broke the demo: an agent must be able to find the proposal it just wrote. |
 | rejection reaches the agent | A human "no" comes back as the tool's return value, not a swallowed error. |
 | approval applies atomically | The whole change set lands, and `tempId` refs resolve so tasks end up inside the sprint created in the same call. |
 | unknown task ids are refused | Bad ids come back as a message the agent can recover from, rather than a half-applied change set. |

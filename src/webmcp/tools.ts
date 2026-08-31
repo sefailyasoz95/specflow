@@ -29,11 +29,7 @@ const num = (description: string) => ({ type: "number", description });
 export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
   const {
     project,
-    requirements,
-    sprints,
-    tasks,
-    changeSets,
-    ui,
+    uiRef,
     setUi,
     setHighlight,
     logAgent,
@@ -43,12 +39,16 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     snapshotRef,
   } = ws;
 
-  /* Freshest change sets, even if a tool fires before React re-renders. */
+  /* Every tool reads the ref, never a render closure. A tool call can
+     land before React has committed the state its own previous call
+     produced — reading the closure is how an agent ends up unable to
+     find the proposal it just wrote. */
+  const live = () => snapshotRef.current;
   const livePending = () =>
-    snapshotRef.current.changeSets.filter((c) => c.status === "pending");
+    live().changeSets.filter((c) => c.status === "pending");
 
   const sprintName = (id: string | null) =>
-    id ? sprints.find((s) => s.id === id)?.name ?? "—" : "Backlog";
+    id ? live().sprints.find((s) => s.id === id)?.name ?? "—" : "Backlog";
 
   return [
     /* ---------------------------------------------------------- read */
@@ -72,6 +72,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
         },
       },
       execute: (input) => {
+        const { requirements, sprints, tasks, changeSets } = live();
         const include =
           (input.include as string[] | undefined) ?? [
             "requirements",
@@ -145,6 +146,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             }));
         }
         if (include.includes("ui")) {
+          const ui = uiRef.current;
           payload.humanIsLookingAt = {
             view: ui.view,
             selectedSprint: sprintName(ui.activeSprintId),
@@ -353,6 +355,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
         required: ["title"],
       },
       execute: async (input) => {
+        const { requirements, sprints, tasks } = live();
         const creates = (input.createTasks ?? []) as Array<Record<string, unknown>>;
         const updates = (input.updateTasks ?? []) as Array<Record<string, unknown>>;
         const removes = (input.deleteTasks ?? []) as string[];
