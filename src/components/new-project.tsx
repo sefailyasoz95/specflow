@@ -123,10 +123,19 @@ export function NewProject() {
           <span aria-hidden className="font-mono">←</span> Projects
         </Link>
         <h1 className="display mt-4 text-[32px] text-fg">Start a project</h1>
-        <p className="mt-2 max-w-[54ch] text-[13.5px] leading-relaxed text-fg-mid">
+        <p className="mt-2 max-w-[58ch] text-[13.5px] leading-relaxed text-fg-mid">
           Give it the messy version — the brief you already have, or the one in
-          your head. It comes back as requirements, sprints and estimates, as a
-          diff you approve. Nothing is written until you do.
+          your head. It comes back as a diff you approve. Nothing is written
+          until you do.
+        </p>
+        <p className="mt-3 max-w-[58ch] text-[12.5px] leading-relaxed text-fg-dim">
+          What comes back is three linked things:{" "}
+          <span className="text-fg-mid">requirements</span> — what the system
+          must do; <span className="text-fg-mid">tasks</span> — the work that
+          makes one of them true; and{" "}
+          <span className="text-fg-mid">sprints</span> — when that work happens.
+          Every task carries both links, so you can always ask what a piece of
+          work is for and when it lands.
         </p>
       </header>
 

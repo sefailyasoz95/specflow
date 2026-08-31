@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +22,12 @@ import { cn } from "@/lib/utils";
  * Values are plain "YYYY-MM-DD" strings and every date is built at UTC
  * noon, so a browser in Istanbul and a server in UTC never disagree
  * about which day was picked.
+ *
+ * The month grid is rendered into a portal and positioned in viewport
+ * coordinates. Inside a modal it has to be: the sheet clips its own
+ * corners with overflow-hidden and scrolls its body, so an absolutely
+ * positioned popover was sliced off a few pixels below the field and the
+ * days could not be reached at all.
  * ------------------------------------------------------------------ */
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -82,14 +95,53 @@ export function DateField({
 
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+
+  /* Rendered before it is placed, so the first measurement is of the real
+     grid rather than a guess at its height, and hidden until then. The
+     position survives a close: placement happens in a layout effect, so a
+     stale one is corrected before the browser paints it. */
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const t = trigger.current?.getBoundingClientRect();
+      if (!t) return;
+      const p = panel.current?.getBoundingClientRect();
+      const h = p?.height ?? 300;
+      const w = p?.width ?? 280;
+      const gap = 8;
+      const room = window.innerHeight - t.bottom - gap - 8;
+      // Below by default; above when the month would not fit and there is
+      // more room up there. A field near the bottom of a modal is the
+      // common case, not the exception.
+      const top = h <= room || t.top - gap - h < 8 ? t.bottom + gap : t.top - gap - h;
+      const left = Math.min(Math.max(8, t.left), window.innerWidth - w - 8);
+      setPos({ top, left });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // The grid lives in a portal now, so "inside" means either node.
+      if (root.current?.contains(target) || panel.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // Without this the modal hosting the field closes at the same
+        // time, and Escape stops meaning "never mind, wrong month".
+        e.stopPropagation();
         setOpen(false);
         trigger.current?.focus();
       }
@@ -161,11 +213,18 @@ export function DateField({
         ) : null}
       </button>
 
-      {open ? (
+      {open
+        ? createPortal(
         <div
+          ref={panel}
           role="dialog"
           aria-label="Choose a date"
-          className="popover absolute left-0 top-full z-40 mt-2 w-[17.5rem] rounded-xl bg-ink-700 p-3
+          style={{
+            top: pos?.top ?? 0,
+            left: pos?.left ?? 0,
+            visibility: pos ? "visible" : "hidden",
+          }}
+          className="popover fixed z-[70] w-[17.5rem] rounded-xl bg-ink-700 p-3
                      shadow-[0_18px_44px_-12px_rgba(0,0,0,0.75)] ring-1 ring-ink-line"
         >
           <header className="flex items-center gap-1 pb-2">
@@ -241,8 +300,10 @@ export function DateField({
               );
             })}
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

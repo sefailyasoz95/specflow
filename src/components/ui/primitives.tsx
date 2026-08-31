@@ -66,8 +66,13 @@ export function Input({
     <input
       className={cn(
         "h-9 w-full rounded-lg bg-ink-800 px-3 text-[13.5px] text-fg",
-        "placeholder:text-fg-dim",
-        "transition-colors duration-150 focus:bg-ink-700 focus:outline-none",
+        // An edge, because a field with none is invisible against the page
+        // it sits on. Inside a modal it reads as recessed; at the bottom of
+        // a board it was a slightly darker rectangle nobody found.
+        "ring-1 ring-inset ring-control-edge",
+        "placeholder:text-fg-mid",
+        "transition-colors duration-150",
+        "focus:bg-ink-700 focus:outline-none focus:ring-fg-dim",
         className
       )}
       {...props}
@@ -114,13 +119,17 @@ export function Fact({
   className,
   children,
   tone = "dim",
+  title,
 }: {
   className?: string;
   tone?: "dim" | "mid" | "paper";
   children: React.ReactNode;
+  /** A compressed number should be able to say what it counts. */
+  title?: string;
 }) {
   return (
     <span
+      title={title}
       className={cn(
         "font-mono text-[11px] tabular-nums",
         tone === "dim" && "text-fg-dim",

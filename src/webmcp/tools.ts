@@ -50,6 +50,12 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
   const sprintName = (id: string | null) =>
     id ? live().sprints.find((s) => s.id === id)?.name ?? "—" : "Backlog";
 
+  const requirementLabel = (id: string | null) => {
+    if (!id) return null;
+    const r = live().requirements.find((x) => x.id === id);
+    return r ? `${r.code} — ${r.title}` : null;
+  };
+
   return [
     /* ---------------------------------------------------------- read */
     {
@@ -100,7 +106,13 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             tasks: tasks.length,
             estimatedHours: totalEstimate,
             unestimatedTasks: tasks.filter((t) => t.estimate_hours == null).length,
+            requirementsWithNoTasks: requirements.filter(
+              (r) => !tasks.some((t) => t.requirement_id === r.id)
+            ).length,
+            tasksWithNoRequirement: tasks.filter((t) => !t.requirement_id).length,
           },
+          howThisFitsTogether:
+            "A requirement is what the system must do. A task is a piece of work that gets one requirement closer to true, and it also sits in a sprint, which is when that work happens. So every task points at two things: a requirement (why) and a sprint (when). A requirement with no tasks is work nobody has planned; a task with no requirement is work nobody asked for. Both are worth telling the human about.",
         };
 
         if (include.includes("settings")) {
@@ -127,14 +139,21 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
         }
 
         if (include.includes("requirements")) {
-          payload.requirements = requirements.map((r) => ({
-            id: r.id,
-            code: r.code,
-            title: r.title,
-            description: r.description,
-            priority: r.priority,
-            status: r.status,
-          }));
+          payload.requirements = requirements.map((r) => {
+            const linked = tasks.filter((t) => t.requirement_id === r.id);
+            return {
+              id: r.id,
+              code: r.code,
+              title: r.title,
+              description: r.description,
+              priority: r.priority,
+              status: r.status,
+              // Coverage, not just identity. A requirement with no tasks is
+              // the most useful thing an agent can notice here.
+              taskCount: linked.length,
+              doneTaskCount: linked.filter((t) => t.status === "done").length,
+            };
+          });
         }
         if (include.includes("sprints")) {
           payload.sprints = sprints.map((s) => ({
@@ -158,6 +177,9 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             sprint: sprintName(t.sprint_id),
             sprintId: t.sprint_id,
             requirementId: t.requirement_id,
+            // Spelled out so the model does not have to join two arrays to
+            // answer "what is this task for".
+            requirement: requirementLabel(t.requirement_id),
           }));
         }
         if (include.includes("proposals")) {
@@ -194,7 +216,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     {
       name: "propose_plan",
       description:
-        "Turn a brief into a complete proposed project plan: requirements, sprints, and tasks with effort estimates, in one reviewable change set. Use `ref` strings to link a task to a sprint or requirement you are creating in the same call.\n\nCall get_project_context first. If it comes back with no brief, no tech stack and no dates, you are about to invent a plan out of nothing — ask the human for what is missing instead, or say plainly in your summary what you assumed.\n\nSequence by risk: whatever is most likely to be wrong, to block everything else, or to be expensive to discover late goes first. Estimate the unglamorous work too — migration, backfill, rollout behind a flag — because that is what plans usually miss. Respect stated non-goals. Write in the language the brief is written in.\n\nThis does NOT modify the project — it creates a diff the human reviews. Call apply_pending_changes afterwards to ask for approval.",
+        "Turn a brief into a complete proposed project plan: requirements, sprints, and tasks with effort estimates, in one reviewable change set. Use `ref` strings to link a task to a sprint or requirement you are creating in the same call.\n\nThe three are not three lists. A requirement is what the system must do; a task is work that gets one requirement closer to true; a sprint is when that work happens. Give every task both links — the requirement it serves and the sprint it belongs to. A requirement you leave with no tasks is a promise with no plan behind it.\n\nCall get_project_context first. If it comes back with no brief, no tech stack and no dates, you are about to invent a plan out of nothing — ask the human for what is missing instead, or say plainly in your summary what you assumed.\n\nSequence by risk: whatever is most likely to be wrong, to block everything else, or to be expensive to discover late goes first. Estimate the unglamorous work too — migration, backfill, rollout behind a flag — because that is what plans usually miss. Respect stated non-goals. Write in the language the brief is written in.\n\nThis does NOT modify the project — it creates a diff the human reviews. Call apply_pending_changes afterwards to ask for approval.",
       inputSchema: {
         type: "object",
         properties: {

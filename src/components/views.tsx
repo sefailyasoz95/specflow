@@ -170,7 +170,19 @@ export function Board() {
                         {t.title}
                       </p>
                       <div className="mt-2 flex items-baseline gap-2.5">
-                        {req ? <Fact>{req.code}</Fact> : null}
+                        {req ? (
+                          <Fact title={`Serves ${req.code} — ${req.title}`}>
+                            {req.code}
+                          </Fact>
+                        ) : (
+                          <Fact
+                            tone="dim"
+                            title="This task is not linked to any requirement — nobody asked for it yet."
+                            className="opacity-60"
+                          >
+                            no req
+                          </Fact>
+                        )}
                         <Fact
                           className={cn(
                             "ml-auto",
@@ -195,7 +207,7 @@ export function Board() {
       </div>
 
       <form
-        className="flex gap-2 border-t border-ink-hair pt-3"
+        className="mt-3 flex items-center gap-2 rounded-xl bg-ink-800/60 p-2 ring-1 ring-ink-line"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draft.trim()) return;
@@ -215,7 +227,7 @@ export function Board() {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Add a task yourself…"
         />
-        <Button type="submit" disabled={!draft.trim()}>
+        <Button type="submit" variant="solid" disabled={!draft.trim()}>
           Add
         </Button>
       </form>
@@ -255,8 +267,10 @@ export function RequirementsView() {
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="pb-5">
         <h2 className="display text-[26px] text-fg">Requirements</h2>
-        <p className="mt-1.5 text-[13.5px] text-fg-mid">
-          What the system has to do, before anyone argues about how.
+        <p className="mt-1.5 max-w-[68ch] text-[13.5px] leading-relaxed text-fg-mid">
+          What the system has to do, before anyone argues about how. Every task
+          on the board points back at one of these, so the count on the right is
+          how much of that requirement is actually planned and done.
         </p>
       </header>
 
@@ -300,8 +314,18 @@ export function RequirementsView() {
                   >
                     {r.priority}
                   </span>
-                  <Fact className="w-12 text-right">
-                    {linked.length ? `${done}/${linked.length}` : "—"}
+                  <Fact
+                    className={cn(
+                      "w-20 text-right",
+                      linked.length === 0 && "text-waiting/80"
+                    )}
+                    title={
+                      linked.length
+                        ? `${done} of ${linked.length} linked ${linked.length === 1 ? "task" : "tasks"} done`
+                        : "No task is linked to this requirement yet"
+                    }
+                  >
+                    {linked.length ? `${done}/${linked.length} tasks` : "no tasks"}
                   </Fact>
                 </div>
               </li>
@@ -311,7 +335,7 @@ export function RequirementsView() {
       )}
 
       <form
-        className="flex gap-2 border-t border-ink-hair pt-3"
+        className="mt-3 flex items-center gap-2 rounded-xl bg-ink-800/60 p-2 ring-1 ring-ink-line"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draft.trim()) return;
@@ -325,7 +349,7 @@ export function RequirementsView() {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="The system must…"
         />
-        <Button type="submit" disabled={!draft.trim()}>
+        <Button type="submit" variant="solid" disabled={!draft.trim()}>
           Add
         </Button>
       </form>
@@ -412,7 +436,7 @@ export function SprintsView() {
       )}
 
       <form
-        className="flex gap-2 border-t border-ink-hair pt-3"
+        className="mt-3 flex items-center gap-2 rounded-xl bg-ink-800/60 p-2 ring-1 ring-ink-line"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!draft.trim()) return;
@@ -426,7 +450,7 @@ export function SprintsView() {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Sprint name…"
         />
-        <Button type="submit" disabled={!draft.trim()}>
+        <Button type="submit" variant="solid" disabled={!draft.trim()}>
           Add
         </Button>
       </form>
