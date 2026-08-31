@@ -30,15 +30,13 @@ const STACK_SUGGESTIONS = [
 
 const ACCEPT = ".md,.markdown,.txt,.pdf,.docx";
 
-/* What the planner is doing, in the order it does it. Not a fake
-   progress bar — each line is a real stage of the request. */
-const STAGES = [
-  "Reading the brief",
-  "Pulling out what the system has to do",
-  "Sequencing by risk",
-  "Estimating the work",
-  "Writing the diff",
-];
+/* There was a list of stages here, advanced by a timer — "Reading the
+   brief", "Sequencing by risk" — none of which the client can actually
+   observe. It is one request, and until it returns we know nothing about
+   where inside it the model is. Inventing progress in a product whose
+   whole argument is that nothing should be faked was the wrong thing to
+   ship, so it is gone. What is left is true: it is working, and here is
+   how long it has been. */
 
 export function NewProject() {
   const router = useRouter();
@@ -52,17 +50,19 @@ export function NewProject() {
   const [endDate, setEndDate] = useState("");
   const [sprintLength, setSprintLength] = useState("2_weeks");
   const [busy, setBusy] = useState(false);
-  const [stage, setStage] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!busy) return;
-    const timers = STAGES.map((_, i) =>
-      setTimeout(() => setStage(i), i * 4500)
+    const started = Date.now();
+    const tick = setInterval(
+      () => setElapsed(Math.round((Date.now() - started) / 1000)),
+      1000
     );
-    return () => timers.forEach(clearTimeout);
+    return () => clearInterval(tick);
   }, [busy]);
 
   const ready = mode === "write" ? brief.trim().length >= 40 : !!file;
@@ -79,7 +79,7 @@ export function NewProject() {
     if (!ready || busy) return;
 
     setBusy(true);
-    setStage(0);
+    setElapsed(0);
     setError(null);
 
     const form = new FormData();
@@ -329,8 +329,14 @@ export function NewProject() {
           {busy ? (
             <p className="flex items-center gap-2.5 text-[13px] text-fg-mid">
               <span className="waiting-dot size-[6px] rounded-full bg-waiting" />
-              <span key={stage} className="enter">
-                {STAGES[stage]}…
+              <span>
+                Reading your brief and planning it.{" "}
+                <span className="font-mono tabular-nums text-fg-dim">
+                  {elapsed}s
+                </span>
+                {elapsed > 75 ? (
+                  <span className="text-fg-dim"> — longer than usual, still going</span>
+                ) : null}
               </span>
             </p>
           ) : (
