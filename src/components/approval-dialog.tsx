@@ -13,7 +13,11 @@ export function ApprovalDialog() {
     <ReviewSheet
       key={cs.id}
       cs={cs}
-      eyebrow="Your agent is waiting on you"
+      eyebrow={
+        cs.source === "planner"
+          ? "Sprintfy is waiting on you"
+          : "Your agent is waiting on you"
+      }
       toolName="apply_pending_changes"
       note={approvalRequest.note}
       askingForReason

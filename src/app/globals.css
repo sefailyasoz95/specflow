@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- * SpecFlow
+ * Sprintfy
  *
  * The thesis: a project plan is a patch, and an agent's proposal is a
  * document you sign off on. So the app is built from two materials.
@@ -249,7 +249,12 @@ body {
   .lift-paper:hover { background: var(--color-paper-warm); }
 }
 
-:focus-visible {
+/* Wrapped in :where() so it carries zero specificity. Components that
+   manage their own focus — a Radix listbox item already has a highlight
+   state — override it with a plain utility class. Without this, the
+   global ring painted an amber box over the highlighted option and read
+   as a rendering glitch. */
+:where(:focus-visible) {
   outline: 2px solid var(--color-waiting);
   outline-offset: 2px;
   border-radius: 6px;

@@ -1,10 +1,10 @@
 /* ------------------------------------------------------------------ *
- * SpecFlow tool evals
+ * Sprintfy tool evals
  *
  * On any project page (or /preview), open the console and run:
  *
  *   const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
- *   await SpecFlowEvals.run()
+ *   await SprintfyEvals.run()
  *
  * It drives the exact ToolDescriptors the page registers with WebMCP —
  * `window.__webmcp` hands back the same objects `registerTool` received —
@@ -232,9 +232,9 @@
     return results;
   }
 
-  window.SpecFlowEvals = { run, call, context, SCENARIOS };
+  window.SprintfyEvals = { run, call, context, SCENARIOS };
   console.log(
-    "%cSpecFlowEvals ready — await SpecFlowEvals.run()",
+    "%cSprintfyEvals ready — await SprintfyEvals.run()",
     "color:#e0a32e;font-weight:600"
   );
 })();

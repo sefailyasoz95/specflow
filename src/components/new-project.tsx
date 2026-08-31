@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Button, Eyebrow, Input, Textarea } from "./ui/primitives";
 import { Select } from "./ui/select";
+import { DateField } from "./ui/date-field";
 import { cn } from "@/lib/utils";
 
 const SPRINT_LENGTHS = [
@@ -48,6 +49,7 @@ export function NewProject() {
   const [stack, setStack] = useState<string[]>([]);
   const [stackDraft, setStackDraft] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [sprintLength, setSprintLength] = useState("2_weeks");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState(0);
@@ -84,6 +86,7 @@ export function NewProject() {
     form.set("name", name.trim());
     form.set("techStack", stack.join(","));
     form.set("startDate", startDate);
+    form.set("endDate", endDate);
     form.set("sprintLength", sprintLength);
     if (mode === "upload" && file) form.set("file", file);
     else form.set("brief", brief.trim());
@@ -293,12 +296,26 @@ export function NewProject() {
 
           <div className="space-y-2">
             <Eyebrow>Start date</Eyebrow>
-            <Input
-              type="date"
+            <DateField
+              ariaLabel="Project start date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="[color-scheme:dark]"
+              onChange={setStartDate}
+              placeholder="When do you start?"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Eyebrow>Target delivery</Eyebrow>
+            <DateField
+              ariaLabel="Target delivery date"
+              value={endDate}
+              onChange={setEndDate}
+              placeholder="Optional"
+              min={startDate || undefined}
+            />
+            <p className="text-[12px] text-fg-dim">
+              Give it a date and the sprints get dated to fit.
+            </p>
           </div>
         </div>
 

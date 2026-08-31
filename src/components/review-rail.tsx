@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useWorkspace } from "@/store/workspace";
 import { PatchStat } from "./patch";
-import { ReviewSheet } from "./review-sheet";
+import { AUTHOR_LABEL, ReviewSheet } from "./review-sheet";
 import { Button, Eyebrow, Fact } from "./ui/primitives";
 import { cn } from "@/lib/utils";
 import type { Surface } from "@/webmcp/registry";
@@ -78,7 +78,7 @@ export function WebMCPStatus({
                   <Fact>3</Fact> Reload this page.
                 </li>
               </ol>
-              <p>Or open SpecFlow inside ChatGPT&apos;s browser.</p>
+              <p>Or open Sprintfy inside ChatGPT&apos;s browser.</p>
             </div>
           )}
         </div>
@@ -144,7 +144,9 @@ export function ProposalList({
               >
                 <div className="flex items-center gap-2">
                   <span className="waiting-dot size-[6px] rounded-full bg-waiting" />
-                  <span className="eyebrow text-paper-dim">Agent</span>
+                  <span className="eyebrow text-paper-dim">
+                    {cs.source === "planner" ? "Sprintfy" : cs.source === "human" ? "You" : "Agent"}
+                  </span>
                   <span className="ml-auto">
                     <PatchStat ctx={{ ...ws, operations: cs.operations }} />
                   </span>
@@ -195,7 +197,7 @@ export function ProposalList({
         <ReviewSheet
           key={open.id}
           cs={open}
-          eyebrow="Proposed by your agent"
+          eyebrow={AUTHOR_LABEL[open.source]}
           onDismiss={() => setOpenId(null)}
           onApprove={async () => {
             await applyChangeSet(open.id);

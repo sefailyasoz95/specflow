@@ -71,7 +71,7 @@ export async function extractBriefText(file: File): Promise<string> {
 
     default:
       throw new BriefError(
-        `SpecFlow can read ${ACCEPTED_BRIEF_TYPES.join(", ")} — "${file.name}" is none of those.`
+        `Sprintfy can read ${ACCEPTED_BRIEF_TYPES.join(", ")} — "${file.name}" is none of those.`
       );
   }
 

@@ -12,10 +12,10 @@ including the live one — without a checkout:
 
 ```js
 const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
-await SpecFlowEvals.run();
+await SprintfyEvals.run();
 ```
 
-`SpecFlowEvals.run({ only: "approval" })` filters by scenario name. Try it
+`SprintfyEvals.run({ only: "approval" })` filters by scenario name. Try it
 on `/preview`, where the whole loop runs in memory and there is nothing to
 clean up afterwards.
 

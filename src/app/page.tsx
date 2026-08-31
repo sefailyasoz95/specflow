@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <div className="min-h-dvh">
       <header className="mx-auto flex w-full max-w-6xl items-center gap-3 px-6 py-5">
-        <span className="display text-[17px] text-fg">SpecFlow</span>
+        <span className="display text-[17px] text-fg">Sprintfy</span>
         <div className="ml-auto flex items-center gap-1">
           <Link
             href="/login"
@@ -95,7 +95,7 @@ export default function Home() {
         <section className="mt-24 max-w-[62ch]">
           <h2 className="display text-[26px] text-fg">Turning WebMCP on</h2>
           <p className="mt-3 text-[13.5px] leading-[1.6] text-fg-mid">
-            Open SpecFlow inside ChatGPT&apos;s browser, or in Chrome with the
+            Open Sprintfy inside ChatGPT&apos;s browser, or in Chrome with the
             flag enabled. The badge in the header turns on and lists the live
             tools.
           </p>

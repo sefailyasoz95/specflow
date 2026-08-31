@@ -4,7 +4,7 @@ import { z } from "zod";
  * One schema, two authors
  *
  * A plan can be written by the visitor's own agent, through the
- * `propose_plan` WebMCP tool, or by SpecFlow's server-side model when
+ * `propose_plan` WebMCP tool, or by Sprintfy's server-side model when
  * someone hands it a brief or a PRD. Both must produce exactly the same
  * shape, because both land in exactly the same place: a change set the
  * human approves.
@@ -72,6 +72,17 @@ export const TaskDraft = z.object({
 
 /** What the model returns when it reads a brief or a PRD. */
 export const GeneratedPlan = z.object({
+  usable: z
+    .boolean()
+    .describe(
+      "True only if the text is a real description of software to be built. False for filler, a single repeated phrase, lorem ipsum, a question, or a document about something other than a software project."
+    ),
+  rejection: z
+    .string()
+    .describe(
+      "When usable is false: one or two sentences, addressed to the person, saying what the text is missing. No apology, no preamble. Null when usable is true."
+    )
+    .nullable(),
   projectName: z
     .string()
     .describe("A short, concrete name for the project, drawn from the brief."),
@@ -89,6 +100,21 @@ export const GeneratedPlan = z.object({
 });
 
 export type GeneratedPlan = z.infer<typeof GeneratedPlan>;
+
+/**
+ * Cheap pre-check before spending a model call. Catches the degenerate
+ * cases — a phrase pasted six times, a keyboard mash — without trying to
+ * judge whether a genuine brief is any good. That judgement is the
+ * model's, and it makes it in the same call that does the planning.
+ */
+export function looksLikeFiller(brief: string): boolean {
+  const words = brief.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+  if (words.length < 8) return true;
+  const unique = new Set(words);
+  if (unique.size < 8) return true;
+  // "Tech stack Tech stack Tech stack" — many words, almost no variety.
+  return unique.size / words.length < 0.25;
+}
 
 /** What an agent passes to the `propose_plan` tool. */
 export const ProposePlanInput = z.object({

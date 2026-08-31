@@ -18,6 +18,13 @@ import { Button, PaperInput } from "./ui/primitives";
  * Same sheet, different eyebrow.
  * ------------------------------------------------------------------ */
 
+/** Who wrote this, said plainly. */
+export const AUTHOR_LABEL = {
+  agent: "Proposed by your agent",
+  planner: "Proposed by Sprintfy",
+  human: "Your change",
+} as const;
+
 export function ReviewSheet({
   cs,
   eyebrow,

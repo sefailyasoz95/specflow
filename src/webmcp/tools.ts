@@ -55,7 +55,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     {
       name: "get_project_context",
       description:
-        "Read the full state of the currently open SpecFlow project: requirements, sprints, tasks with estimates, pending change sets, and what the human is looking at right now (active view, selected sprint, filters). Call this before proposing anything so your plan fits what already exists.",
+        "Read the full state of the currently open Sprintfy project: requirements, sprints, tasks with estimates, pending change sets, and what the human is looking at right now (active view, selected sprint, filters). Call this before proposing anything so your plan fits what already exists.",
       annotations: { readOnlyHint: true },
       inputSchema: {
         type: "object",

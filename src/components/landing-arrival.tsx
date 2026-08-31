@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
  * ------------------------------------------------------------------ */
 
 const GREETING =
-  "Welcome to SpecFlow, your agent-native sprint planning board.";
+  "Welcome to Sprintfy, your agent-native sprint planning board.";
 
 const CHOICES = [
   { id: "demo", label: "Show me a demo", href: "/preview" },
@@ -220,15 +220,15 @@ function buildLandingTools(
 
   return [
     {
-      name: "about_specflow",
+      name: "about_sprintfy",
       description:
-        "Explain what SpecFlow is, how agents work with it, and what tools become available once a project is open. Call this when the visitor asks what this site is.",
+        "Explain what Sprintfy is, how agents work with it, and what tools become available once a project is open. Call this when the visitor asks what this site is.",
       annotations: { readOnlyHint: true },
       inputSchema: { type: "object", properties: {} },
       execute: () =>
         JSON.stringify(
           {
-            what: "SpecFlow turns rough software requirements into a structured plan: requirements, sprints, tasks and effort estimates.",
+            what: "Sprintfy turns rough software requirements into a structured plan: requirements, sprints, tasks and effort estimates.",
             theIdea:
               "Agents never write to a plan. Every write tool authors a change set — a reviewable diff — and apply_pending_changes hands control to the human and waits for their decision, then returns it to you.",
             youCanDoNow: [
@@ -262,7 +262,7 @@ function buildLandingTools(
     {
       name: "begin_signup",
       description:
-        "Take the visitor to the sign-up screen. SpecFlow accounts are email and password; the visitor types their own credentials.",
+        "Take the visitor to the sign-up screen. Sprintfy accounts are email and password; the visitor types their own credentials.",
       inputSchema: {
         type: "object",
         properties: { email: str("Optional: prefill this email address.") },

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { createClient } from "@/lib/supabase/server";
-import { GeneratedPlan } from "@/lib/plan-schema";
+import { GeneratedPlan, looksLikeFiller } from "@/lib/plan-schema";
 import { BriefError, extractBriefText } from "@/lib/extract-text";
 import type { Op, Project } from "@/lib/types";
 
@@ -25,6 +25,8 @@ How you work:
 - Respect the stated non-goals. If the brief says something is out of scope, it does not appear in the plan.
 - Requirements are what the system must do; tasks are how. Link tasks to the requirement they serve.
 - If the brief is thin, say so in your reasoning and make the first sprint the one that resolves the unknowns, rather than inventing detail that is not there.
+
+Before planning, judge the brief. If it is not a description of software to be built — filler, one phrase repeated, lorem ipsum, a question, notes about something else entirely — set usable to false, write one or two plain sentences in rejection saying what is missing, and return empty arrays. Do not invent a project in order to be helpful. A thin but genuine brief IS usable: you handle that by making the first sprint resolve the unknowns and saying so in your reasoning.
 
 Write in the same language as the brief. If the brief is in Turkish, the plan is in Turkish.
 
@@ -83,6 +85,7 @@ export async function POST(request: Request) {
   let name = "";
   let techStack: string[] = [];
   let startDate: string | null = null;
+  let endDate: string | null = null;
   let sprintLength: string | null = null;
 
   try {
@@ -93,6 +96,7 @@ export async function POST(request: Request) {
       .map((t) => t.trim())
       .filter(Boolean);
     startDate = (String(form.get("startDate") ?? "").trim() || null) as string | null;
+    endDate = (String(form.get("endDate") ?? "").trim() || null) as string | null;
     sprintLength = (String(form.get("sprintLength") ?? "").trim() || null) as string | null;
 
     const file = form.get("file");
@@ -111,11 +115,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not read the request." }, { status: 400 });
   }
 
-  if (brief.length < 40) {
+  if (brief.length < 40 || looksLikeFiller(brief)) {
     return NextResponse.json(
       {
         error:
-          "Tell it a bit more. A couple of sentences on what you are building, who it is for, and what is already hurting is enough.",
+          "That does not read like a project brief. A couple of real sentences — what you are building, who it is for, and what is already hurting — is enough to start.",
       },
       { status: 400 }
     );
@@ -135,6 +139,7 @@ export async function POST(request: Request) {
             name ? `Project name (given by the user): ${name}` : null,
             techStack.length ? `Tech stack: ${techStack.join(", ")}` : null,
             startDate ? `Start date: ${startDate}` : null,
+            endDate ? `Target delivery date: ${endDate}` : null,
             sprintLength ? `Preferred sprint length: ${sprintLength}` : null,
             fileName ? `Source document: ${fileName}` : null,
             "",
@@ -162,6 +167,17 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!plan.usable) {
+    return NextResponse.json(
+      {
+        error:
+          plan.rejection ??
+          "That does not read like a description of software to be built.",
+      },
+      { status: 422 }
+    );
+  }
+
   if (plan.tasks.length === 0) {
     return NextResponse.json(
       { error: "The planner read the brief but found nothing to plan. Try adding more detail." },
@@ -178,6 +194,7 @@ export async function POST(request: Request) {
       description: plan.projectSummary,
       tech_stack: techStack,
       start_date: startDate,
+      end_date: endDate,
       sprint_length: sprintLength,
     })
     .select()
@@ -208,7 +225,7 @@ export async function POST(request: Request) {
       project_id: project.id,
       title: "Initial plan from your brief",
       summary: plan.reasoning,
-      source: "agent",
+      source: "planner",
       status: "pending",
       operations: buildOperations(plan),
     })

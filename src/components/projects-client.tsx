@@ -45,7 +45,7 @@ export function ProjectsClient({
       {
         name: "list_projects",
         description:
-          "List the SpecFlow projects this signed-in user owns, with their ids and descriptions. Open one to get the full planning tool set.",
+          "List the Sprintfy projects this signed-in user owns, with their ids and descriptions. Open one to get the full planning tool set.",
         annotations: { readOnlyHint: true },
         inputSchema: { type: "object", properties: {} },
         execute: () =>
@@ -63,7 +63,7 @@ export function ProjectsClient({
       {
         name: "create_project",
         description:
-          "Create a new SpecFlow project and open it. Use this before planning when the user describes work that has no project yet. Once open, the project planning tools become available.",
+          "Create a new Sprintfy project and open it. Use this before planning when the user describes work that has no project yet. Once open, the project planning tools become available.",
         inputSchema: {
           type: "object",
           properties: {
@@ -93,7 +93,7 @@ export function ProjectsClient({
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-10 px-6 py-10">
       <header className="flex items-center gap-3">
         <Link href="/" className="display text-[17px] text-fg">
-          SpecFlow
+          Sprintfy
         </Link>
         <div className="ml-auto flex items-center gap-1">
           <WebMCPStatus surface={surface} toolNames={toolNames} />

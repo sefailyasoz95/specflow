@@ -138,7 +138,7 @@ export type ChangeSet = {
   project_id: string;
   title: string;
   summary: string | null;
-  source: "agent" | "human";
+  source: "agent" | "planner" | "human";
   status: ChangeSetStatus;
   operations: Op[];
   created_at: string;

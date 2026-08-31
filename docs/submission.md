@@ -2,12 +2,12 @@
 
 > Judging weighs four things: depth of the WebMCP implementation, whether it is
 > a coherent product, credible impact, and novelty. This draft leads with the
-> one design decision that separates SpecFlow from a CRUD app with tools
+> one design decision that separates Sprintfy from a CRUD app with tools
 > bolted on, because that is the only part a judge cannot skim past.
 
 ---
 
-## SpecFlow — plan software *with* your agent, not *for* it
+## Sprintfy — plan software *with* your agent, not *for* it
 
 ### The problem
 
@@ -23,9 +23,9 @@ opinion about. Handing that to an agent as unsupervised INSERTs gets you a
 plan nobody trusts and everybody has to re-check — which is more work than
 writing it by hand.
 
-### What SpecFlow does
+### What Sprintfy does
 
-SpecFlow is a project planner — requirements, sprints, tasks, effort
+Sprintfy is a project planner — requirements, sprints, tasks, effort
 estimates — that exposes its workspace to agents over WebMCP. **No agent tool
 writes to the plan.** The collaboration runs in three moves:
 
@@ -57,7 +57,7 @@ with the write.
 ### Why it matters
 
 The gap between "an agent that can act" and "an agent you'd let act on the
-thing you get paid for" is entirely about review. SpecFlow is a small argument
+thing you get paid for" is entirely about review. Sprintfy is a small argument
 that the reviewable-proposal pattern belongs in the page, not in the model:
 the site knows what a legitimate change to itself looks like, so the site is
 what should render the diff and hold the gate. Any agent — any model, any

@@ -1,8 +1,8 @@
-# SpecFlow
+# Sprintfy
 
 **Plan software with your agent, not for it.**
 
-SpecFlow turns a rough brief into a structured project plan — requirements,
+Sprintfy turns a rough brief into a structured project plan — requirements,
 sprints, tasks, effort estimates — inside the same workspace a human project
 manager uses. It exposes that workspace to AI agents over
 [WebMCP](https://github.com/webmachinelearning/webmcp).
@@ -18,7 +18,7 @@ the database. That works right up until the model is confidently wrong about
 your sprint plan — and then you are archaeology-ing through a project board
 trying to work out what it touched.
 
-SpecFlow inverts it. **No agent tool writes to the plan.**
+Sprintfy inverts it. **No agent tool writes to the plan.**
 
 1. **The agent reads the room.** `get_project_context` returns the plan *and*
    what the human is currently looking at — active view, selected sprint,
@@ -51,7 +51,7 @@ what `toolchange` in the spec is for.
 
 | Tool | |
 | --- | --- |
-| `about_specflow` | What this site is and where to sign in. An agent that lands here can ask, instead of scraping the DOM. |
+| `about_sprintfy` | What this site is and where to sign in. An agent that lands here can ask, instead of scraping the DOM. |
 
 ### On `/projects`
 
@@ -121,11 +121,11 @@ and the `apply_change_set` function.
 
 ### Turning WebMCP on
 
-Open SpecFlow in ChatGPT's browser, or in Chrome:
+Open Sprintfy in ChatGPT's browser, or in Chrome:
 
 1. `chrome://flags/#enable-webmcp-testing` → **Enabled**
 2. Relaunch Chrome
-3. Reload SpecFlow — the header badge turns orange and lists the live tools
+3. Reload Sprintfy — the header badge turns orange and lists the live tools
 
 ---
 
@@ -137,7 +137,7 @@ with or without the Chrome flag. On any project page (or `/preview`):
 
 ```js
 const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
-await SpecFlowEvals.run();
+await SprintfyEvals.run();
 ```
 
 They exist because two of them caught real bugs: an agent could not always

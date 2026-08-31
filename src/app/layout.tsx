@@ -26,9 +26,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SpecFlow — plan software with your agent, not for it",
+  title: "Sprintfy — plan software with your agent, not for it",
   description:
-    "SpecFlow turns rough requirements into a structured project plan. Agents propose the plan through WebMCP as a reviewable diff; you approve it.",
+    "Sprintfy turns rough requirements into a structured project plan. Agents propose the plan through WebMCP as a reviewable diff; you approve it.",
 };
 
 export default function RootLayout({

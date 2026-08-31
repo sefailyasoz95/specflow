@@ -1,4 +1,4 @@
--- SpecFlow — initial schema
+-- Sprintfy — initial schema
 -- Agent-native project planning. Agents never mutate domain tables directly;
 -- they author change_sets that a human approves.
 
