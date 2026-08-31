@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { applyOpsLocally } from "@/lib/apply-local";
 import type {
   ChangeSet,
+  ProjectBrief,
   Op,
   Project,
   Requirement,
@@ -47,6 +48,8 @@ export type AgentEvent = {
 
 export type Snapshot = {
   project: Project;
+  /** The brief or PRD this project was planned from, if there is one. */
+  brief: ProjectBrief | null;
   requirements: Requirement[];
   sprints: Sprint[];
   tasks: Task[];
@@ -195,6 +198,7 @@ export function WorkspaceProvider({
     ]);
     const next: Snapshot = {
       project: snapshotRef.current.project,
+      brief: snapshotRef.current.brief,
       requirements: (reqs.data ?? []) as Requirement[],
       sprints: (sprints.data ?? []) as Sprint[],
       tasks: (tasks.data ?? []) as Task[],

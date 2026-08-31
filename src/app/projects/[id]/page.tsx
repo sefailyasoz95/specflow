@@ -5,6 +5,7 @@ import { WorkspaceShell } from "@/components/workspace-shell";
 import type {
   ChangeSet,
   Project,
+  ProjectBrief,
   Requirement,
   Sprint,
   Task,
@@ -31,7 +32,7 @@ export default async function ProjectPage({
 
   if (!project) notFound();
 
-  const [requirements, sprints, tasks, changeSets] = await Promise.all([
+  const [requirements, sprints, tasks, changeSets, brief] = await Promise.all([
     supabase.from("requirements").select("*").eq("project_id", id).order("position"),
     supabase.from("sprints").select("*").eq("project_id", id).order("position"),
     supabase.from("tasks").select("*").eq("project_id", id).order("position"),
@@ -41,12 +42,20 @@ export default async function ProjectPage({
       .eq("project_id", id)
       .order("created_at", { ascending: false })
       .limit(30),
+    supabase
+      .from("project_briefs")
+      .select("*")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   return (
     <WorkspaceProvider
       initial={{
         project: project as Project,
+        brief: (brief.data ?? null) as ProjectBrief | null,
         requirements: (requirements.data ?? []) as Requirement[],
         sprints: (sprints.data ?? []) as Sprint[],
         tasks: (tasks.data ?? []) as Task[],

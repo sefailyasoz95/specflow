@@ -150,4 +150,22 @@ const changeSets: ChangeSet[] = [
   },
 ];
 
-export const mockSnapshot = { project, requirements, sprints, tasks, changeSets };
+const brief = {
+  id: uid(70),
+  project_id: project.id,
+  source: "written" as const,
+  file_name: null,
+  mime_type: null,
+  content:
+    "We're rebuilding checkout for our marketplace. People drop off hard at the payment step — around 40% — and support keeps getting the same two emails: why was I charged twice, and where do I put the discount code.",
+  created_at: now,
+};
+
+export const mockSnapshot = {
+  project,
+  brief,
+  requirements,
+  sprints,
+  tasks,
+  changeSets,
+};

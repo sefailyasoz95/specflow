@@ -55,7 +55,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     {
       name: "get_project_context",
       description:
-        "Read the full state of the currently open Sprintfy project: requirements, sprints, tasks with estimates, pending change sets, and what the human is looking at right now (active view, selected sprint, filters). Call this before proposing anything so your plan fits what already exists.",
+        "Read the full state of the currently open Sprintfy project: the brief it was started from, its tech stack and dates, requirements, sprints, tasks with estimates, pending change sets, and what the human is looking at right now. Call this before proposing anything — the brief and the settings are what a plan has to answer to, and proposing without reading them is guessing.",
       annotations: { readOnlyHint: true },
       inputSchema: {
         type: "object",
@@ -66,7 +66,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
               "Optional subsets to return. Defaults to everything.",
             items: {
               type: "string",
-              enum: ["requirements", "sprints", "tasks", "proposals", "ui"],
+              enum: ["brief", "settings", "requirements", "sprints", "tasks", "proposals", "ui"],
             },
           },
         },
@@ -75,6 +75,8 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
         const { requirements, sprints, tasks, changeSets } = live();
         const include =
           (input.include as string[] | undefined) ?? [
+            "brief",
+            "settings",
             "requirements",
             "sprints",
             "tasks",
@@ -100,6 +102,29 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             unestimatedTasks: tasks.filter((t) => t.estimate_hours == null).length,
           },
         };
+
+        if (include.includes("settings")) {
+          payload.settings = {
+            techStack: project.tech_stack,
+            startDate: project.start_date,
+            endDate: project.end_date,
+            sprintLength: project.sprint_length,
+          };
+        }
+
+        if (include.includes("brief")) {
+          const brief = live().brief;
+          payload.brief = brief
+            ? {
+                source: brief.source,
+                fileName: brief.file_name,
+                content:
+                  brief.content.length > 12000
+                    ? brief.content.slice(0, 12000) + "\n\n[truncated]"
+                    : brief.content,
+              }
+            : null;
+        }
 
         if (include.includes("requirements")) {
           payload.requirements = requirements.map((r) => ({
@@ -169,7 +194,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     {
       name: "propose_plan",
       description:
-        "Turn rough requirements into a complete proposed project plan: requirements, sprints, and tasks with effort estimates, in one reviewable change set. Use `ref` strings to link a task to a sprint or requirement you are creating in the same call. This does NOT modify the project — it creates a diff the human reviews. Call apply_pending_changes afterwards to ask for approval.",
+        "Turn a brief into a complete proposed project plan: requirements, sprints, and tasks with effort estimates, in one reviewable change set. Use `ref` strings to link a task to a sprint or requirement you are creating in the same call.\n\nCall get_project_context first. If it comes back with no brief, no tech stack and no dates, you are about to invent a plan out of nothing — ask the human for what is missing instead, or say plainly in your summary what you assumed.\n\nSequence by risk: whatever is most likely to be wrong, to block everything else, or to be expensive to discover late goes first. Estimate the unglamorous work too — migration, backfill, rollout behind a flag — because that is what plans usually miss. Respect stated non-goals. Write in the language the brief is written in.\n\nThis does NOT modify the project — it creates a diff the human reviews. Call apply_pending_changes afterwards to ask for approval.",
       inputSchema: {
         type: "object",
         properties: {
