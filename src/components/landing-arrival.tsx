@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Typewriter } from "./typewriter";
 import { useWebMCP } from "@/webmcp/use-webmcp";
 import type { ToolDescriptor } from "@/webmcp/registry";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,9 @@ import { cn } from "@/lib/utils";
  * routes are exposed as tools below, so "show me a demo" works whether a
  * human clicks it or a model calls it.
  * ------------------------------------------------------------------ */
+
+const GREETING =
+  "Welcome to SpecFlow, your agent-native sprint planning board.";
 
 const CHOICES = [
   { id: "demo", label: "Show me a demo", href: "/preview" },
@@ -56,15 +60,20 @@ export function LandingArrival() {
   const { surface, toolNames } = useWebMCP(() => buildLandingTools(router));
   const live = surface !== "unavailable";
 
-  /* One orchestrated sequence, not scattered effects: the name, then the
-     handover, then the question. ~90ms apart — enough to read as an
-     order of events, short enough that nobody waits. */
+  /* One orchestrated sequence, not scattered effects. The eyebrow and
+     the headline are on timers; everything after waits for the sentence
+     to finish typing, so the page never talks over itself. */
   useEffect(() => {
-    const timers = [120, 340, 700, 900].map((ms, i) =>
+    const timers = [120, 300].map((ms, i) =>
       setTimeout(() => setStep((s) => Math.max(s, i + 1)), ms)
     );
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  const onGreetingTyped = () => {
+    setStep((s) => Math.max(s, 3));
+    setTimeout(() => setStep((s) => Math.max(s, 4)), 260);
+  };
 
   const shown = (n: number) => step >= n;
 
@@ -76,7 +85,12 @@ export function LandingArrival() {
 
       <Reveal show={shown(2)} className="mt-5">
         <h1 className="display max-w-[19ch] text-[40px] leading-[1.06] text-fg sm:text-[54px]">
-          Welcome to SpecFlow, your agent-native sprint planning board.
+          <Typewriter
+            text={GREETING}
+            startDelay={180}
+            speed={24}
+            onDone={onGreetingTyped}
+          />
         </h1>
       </Reveal>
 
@@ -126,15 +140,20 @@ export function LandingArrival() {
                 router.push(choice.href);
               }}
               className={cn(
-                "press rounded-full px-4 py-2.5 text-[13.5px]",
+                "press sheen rounded-full px-4 py-2.5 text-[13.5px]",
                 i === 0
-                  ? "bg-fg text-ink-900 hover:bg-white"
+                  ? "sheen-light bg-fg text-ink-900 hover:bg-white"
                   : "bg-ink-800 text-fg-mid hover:bg-ink-700 hover:text-fg"
               )}
-              style={{
-                animation: `rise 320ms var(--ease-out-quart) both`,
-                animationDelay: `${i * 70}ms`,
-              }}
+              style={
+                {
+                  animation: `rise 320ms var(--ease-out-quart) both`,
+                  animationDelay: `${i * 70}ms`,
+                  // The sheen is one gesture crossing the row, so each
+                  // pill picks it up shortly after the one before it.
+                  "--sheen-delay": `${i * 320}ms`,
+                } as React.CSSProperties
+              }
             >
               {choice.label}
             </button>

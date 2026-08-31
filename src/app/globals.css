@@ -177,6 +177,42 @@ body {
   to   { opacity: 1; transform: translateY(0) }
 }
 
+/* ------------------------------------------------------ typewriter */
+@keyframes caret-blink {
+  0%, 45%   { opacity: 1 }
+  55%, 100% { opacity: 0.15 }
+}
+.caret { animation: caret-blink 1s steps(1, end) infinite; }
+
+/* --------------------------------------------------------- the sheen */
+/* One gesture travelling across the row of choices, then a long rest —
+   three separate loops would compete and read like an ad. Low contrast,
+   paused on hover so it never fights the hover state, gone entirely
+   under reduced motion. */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    var(--sheen-color, #ffffff1f) 50%,
+    transparent 65%
+  );
+  transform: translateX(-140%);
+  animation: sheen-sweep 6.5s var(--ease-out-quart) infinite;
+  animation-delay: var(--sheen-delay, 0ms);
+}
+.sheen-light::after { --sheen-color: #00000012; }
+.sheen:hover::after { animation-play-state: paused; }
+
+@keyframes sheen-sweep {
+  0%          { transform: translateX(-140%) }
+  22%, 100%   { transform: translateX(240%) }
+}
+
 /* ------------------------------------------------ the waiting dot */
 /* Rare event — the agent has taken the floor — so delight is allowed. */
 @keyframes waiting {
@@ -201,6 +237,8 @@ body {
     @starting-style { opacity: 0; transform: none; filter: none }
   }
   .stagger > * { animation: fade 180ms ease both }
+  .caret { animation: none }
+  .sheen::after { animation: none; opacity: 0 }
   .popover[data-state="open"] { animation: fade 140ms ease }
   .waiting-dot { animation: none }
   @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
