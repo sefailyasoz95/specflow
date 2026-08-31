@@ -44,6 +44,7 @@ export type Surface =
   | "document.modelContext"
   | "navigator.modelContext"
   | "navigator.provideContext"
+  | "navigator.modelContextTesting"
   | "unavailable";
 
 type AnyContext = {
@@ -63,12 +64,49 @@ function navigatorContext(): AnyContext | null {
   return (navigator as unknown as { modelContext?: AnyContext }).modelContext ?? null;
 }
 
+/** What Chrome exposes behind #enable-webmcp-testing, which is the flag
+ *  our own instructions tell people to turn on. */
+function testingContext(): AnyContext | null {
+  if (typeof navigator === "undefined") return null;
+  return (
+    (navigator as unknown as { modelContextTesting?: AnyContext })
+      .modelContextTesting ?? null
+  );
+}
+
 export function detectSurface(): Surface {
   if (documentContext()) return "document.modelContext";
   const nav = navigatorContext();
   if (nav?.registerTool) return "navigator.modelContext";
   if (nav?.provideContext) return "navigator.provideContext";
+  const testing = testingContext();
+  if (testing?.registerTool || testing?.provideContext) {
+    return "navigator.modelContextTesting";
+  }
   return "unavailable";
+}
+
+/** Everything we probed and what we found. Shown in the badge when
+ *  nothing is detected, so "off" is a diagnosis rather than a shrug. */
+export function probe(): Record<string, string> {
+  const shape = (ctx: AnyContext | null) =>
+    !ctx
+      ? "absent"
+      : [
+          ctx.registerTool ? "registerTool" : null,
+          ctx.unregisterTool ? "unregisterTool" : null,
+          ctx.provideContext ? "provideContext" : null,
+        ]
+          .filter(Boolean)
+          .join(", ") || "present, no known methods";
+
+  return {
+    "document.modelContext": shape(documentContext()),
+    "navigator.modelContext": shape(navigatorContext()),
+    "navigator.modelContextTesting": shape(testingContext()),
+    secureContext:
+      typeof window === "undefined" ? "unknown" : String(window.isSecureContext),
+  };
 }
 
 /** What this document currently has registered, by tool name. */
@@ -110,8 +148,14 @@ export async function registerTools(
 
   // provideContext replaces the whole set in one call, so it has no
   // per-name collision to manage.
-  if (surface === "navigator.provideContext") {
-    const nav = navigatorContext()!;
+  if (
+    surface === "navigator.provideContext" ||
+    (surface === "navigator.modelContextTesting" && !testingContext()?.registerTool)
+  ) {
+    const nav =
+      surface === "navigator.provideContext"
+        ? navigatorContext()!
+        : testingContext()!;
     if (pageSignal.aborted) return { surface, registered: [] };
     await nav.provideContext!({ tools: wrapped });
     pageSignal.addEventListener(
@@ -150,7 +194,10 @@ export async function registerTools(
       if (surface === "document.modelContext") {
         await documentContext()!.registerTool!(tool, { signal: controller.signal });
       } else {
-        const nav = navigatorContext()!;
+        const nav =
+          surface === "navigator.modelContextTesting"
+            ? testingContext()!
+            : navigatorContext()!;
         await nav.registerTool!(tool);
         // This surface has no signal, so unregister by name instead.
         controller.signal.addEventListener(

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Typewriter } from "./typewriter";
 import { useWebMCP } from "@/webmcp/use-webmcp";
-import type { ToolDescriptor } from "@/webmcp/registry";
+import { probe, type ToolDescriptor } from "@/webmcp/registry";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ *
@@ -136,13 +136,27 @@ export function LandingArrival() {
             </ul>
           </div>
         ) : (
-          <p className="max-w-[54ch] text-[14px] leading-relaxed text-fg-dim">
-            Your browser has WebMCP switched off, so the tools on this page
-            are dormant. Everything below still works —{" "}
-            <span className="text-fg-mid">
-              turn the flag on and reload to watch them arrive.
-            </span>
-          </p>
+          <div className="max-w-[46ch]">
+            <p className="text-[14px] leading-relaxed text-fg-dim">
+              Your browser has WebMCP switched off, so the tools on this page
+              are dormant. Everything below still works —{" "}
+              <span className="text-fg-mid">
+                turn the flag on and reload to watch them arrive.
+              </span>
+            </p>
+
+            {/* What we actually looked for. "Off" should be something you
+                can act on, not a shrug — and the surfaces are still moving,
+                so naming them is worth the space. */}
+            <ul className="mt-3 space-y-0.5 rounded-lg bg-ink-850 p-2.5 font-mono text-[11px]">
+              {Object.entries(probe()).map(([key, found]) => (
+                <li key={key} className="flex gap-3">
+                  <span className="text-fg-dim">{key}</span>
+                  <span className="ml-auto text-fg-mid">{found}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </Reveal>
 

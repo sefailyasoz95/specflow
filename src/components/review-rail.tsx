@@ -6,12 +6,13 @@ import { PatchStat } from "./patch";
 import { AUTHOR_LABEL, ReviewSheet } from "./review-sheet";
 import { Button, Eyebrow, Fact } from "./ui/primitives";
 import { cn } from "@/lib/utils";
-import type { Surface } from "@/webmcp/registry";
+import { probe, type Surface } from "@/webmcp/registry";
 
 const SURFACE_LABEL: Record<Surface, string> = {
   "document.modelContext": "document.modelContext",
   "navigator.modelContext": "navigator.modelContext",
   "navigator.provideContext": "navigator.provideContext",
+  "navigator.modelContextTesting": "navigator.modelContextTesting",
   unavailable: "not detected",
 };
 
@@ -60,6 +61,16 @@ export function WebMCPStatus({
             </ul>
           ) : (
             <div className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-fg-dim">
+              {/* "Off" should be a diagnosis, not a shrug — these are the
+                  surfaces we looked for and what was actually there. */}
+              <ul className="space-y-0.5 rounded-lg bg-ink-900 p-2.5 font-mono text-[11px]">
+                {Object.entries(probe()).map(([key, found]) => (
+                  <li key={key} className="flex gap-2">
+                    <span className="text-fg-dim">{key}</span>
+                    <span className="ml-auto text-fg-mid">{found}</span>
+                  </li>
+                ))}
+              </ul>
               <p>
                 The tools register the moment a WebMCP-capable browser is
                 present. In Chrome:
