@@ -10,7 +10,7 @@ import { TASK_STATUSES, TASK_STATUS_LABEL, type TaskStatus } from "@/lib/types";
 
 export function Board() {
   const ws = useWorkspace();
-  const { tasks, sprints, requirements, ui, highlight, updateTaskDirect, createTaskDirect } = ws;
+  const { tasks, sprints, requirements, ui, setUi, highlight, updateTaskDirect, createTaskDirect } = ws;
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<TaskStatus | null>(null);
   const [draft, setDraft] = useState("");
@@ -30,10 +30,35 @@ export function Board() {
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-end gap-5 pb-5">
         <div className="min-w-0">
-          <h2 className="display text-[26px] text-fg">
-            {sprint?.name ??
-              (ui.activeSprintId === "__backlog__" ? "Backlog" : "All work")}
-          </h2>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+            <h2 className="display text-[26px] text-fg">
+              {sprint?.name ??
+                (ui.activeSprintId === "__backlog__" ? "Backlog" : "All work")}
+            </h2>
+
+            {/* An agent can set this filter through `focus`. A filter the
+                human cannot see is a board that looks broken, so it is
+                always visible and always one click from gone. */}
+            {ui.statusFilter !== "all" ? (
+              <button
+                onClick={() => setUi({ statusFilter: "all" })}
+                className="press group inline-flex items-center gap-1.5 rounded-full
+                           bg-ink-800 py-1 pl-2.5 pr-2 text-[12px] text-fg-mid
+                           hover:bg-ink-700 hover:text-fg"
+              >
+                <span className="size-[5px] rounded-full bg-waiting" />
+                {TASK_STATUS_LABEL[ui.statusFilter]} only
+                <span
+                  aria-hidden
+                  className="font-mono text-[13px] leading-none text-fg-dim group-hover:text-fg"
+                >
+                  ×
+                </span>
+                <span className="sr-only">Clear the status filter</span>
+              </button>
+            ) : null}
+          </div>
+
           {sprint?.goal ? (
             <p className="mt-1.5 max-w-[52ch] text-[13.5px] leading-relaxed text-fg-mid">
               {sprint.goal}
@@ -132,6 +157,7 @@ export function Board() {
               {col.length === 0 ? (
                 <p className="px-1 py-2 font-mono text-[12px] text-fg-dim/50">—</p>
               ) : null}
+
             </section>
           );
         })}
