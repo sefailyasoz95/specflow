@@ -116,9 +116,11 @@ export function NewProject() {
       <header className="mb-9">
         <Link
           href="/projects"
-          className="press -ml-1 inline-block rounded px-1 text-[13px] text-fg-dim hover:text-fg"
+          className="press inline-flex items-center gap-1.5 rounded-lg bg-control px-2.5 py-1.5
+                     text-[12.5px] text-fg-mid ring-1 ring-control-edge/60
+                     hover:bg-control-hover hover:text-fg hover:ring-control-edge"
         >
-          ← Projects
+          <span aria-hidden className="font-mono">←</span> Projects
         </Link>
         <h1 className="display mt-4 text-[32px] text-fg">Start a project</h1>
         <p className="mt-2 max-w-[54ch] text-[13.5px] leading-relaxed text-fg-mid">

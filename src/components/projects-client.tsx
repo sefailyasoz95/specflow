@@ -186,12 +186,26 @@ export function ProjectsClient({
           project itself — <span className="font-mono text-[12.5px]">create_project</span>{" "}
           is registered on this page.
         </p>
+
+        {/* The one thing this page is for. It was at the bottom, in a card
+            that did not look like a control. */}
+        <Link
+          href="/projects/new"
+          className="press mt-6 inline-flex items-center gap-2 rounded-lg bg-fg px-4 py-2.5
+                     text-[13.5px] font-medium text-ink-900 hover:bg-white"
+        >
+          Start a project
+          <span aria-hidden className="font-mono">→</span>
+        </Link>
+        <p className="mt-2.5 text-[12.5px] text-fg-dim">
+          Paste a brief or upload a PRD. It comes back as a plan you approve.
+        </p>
       </section>
 
       {projects.length === 0 ? (
         <Empty
-          title="No projects yet"
-          hint="Name one below, or ask your agent to set it up."
+          title="Nothing here yet"
+          hint="Your first project starts from whatever you already wrote — a brief, a backlog, a PRD."
         />
       ) : (
         <ul className="stagger">
@@ -212,23 +226,6 @@ export function ProjectsClient({
           ))}
         </ul>
       )}
-
-      <section className="mt-auto border-t border-ink-hair pt-6">
-        <Link
-          href="/projects/new"
-          className="press lift flex items-center gap-4 rounded-xl bg-ink-850 px-4 py-4"
-        >
-          <div className="min-w-0">
-            <p className="display text-[17px] text-fg">Start a project</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-fg-dim">
-              Paste a brief or upload a PRD. It comes back as a plan you approve.
-            </p>
-          </div>
-          <span aria-hidden className="ml-auto font-mono text-[15px] text-fg-dim">
-            →
-          </span>
-        </Link>
-      </section>
     </main>
   );
 }

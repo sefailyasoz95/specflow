@@ -17,20 +17,40 @@ export function Button({
       className={cn(
         "press inline-flex items-center justify-center gap-1.5 rounded-lg font-medium",
         "disabled:pointer-events-none disabled:opacity-40",
-        size === "sm" ? "h-7 px-2.5 text-[12.5px]" : "h-9 px-3.5 text-[13.5px]",
+        size === "sm" ? "h-8 px-3 text-[12.5px]" : "h-9 px-3.5 text-[13.5px]",
+        // Every variant carries a surface or an edge. A control that is
+        // only a word is a control nobody finds.
         variant === "ink" &&
-          "bg-ink-700 text-fg hover:bg-ink-600",
+          "bg-control text-fg ring-1 ring-control-edge/60 hover:bg-control-hover hover:ring-control-edge",
         variant === "solid" &&
           "bg-fg text-ink-900 hover:bg-white",
         variant === "quiet" &&
-          "text-fg-mid hover:bg-ink-800 hover:text-fg",
-        // On paper, the commit action is the darkest thing on the page.
+          "text-fg-mid ring-1 ring-control-edge/45 hover:bg-control hover:text-fg hover:ring-control-edge",
         variant === "commit" &&
           "bg-paper-fg text-paper hover:bg-black",
         variant === "paper" &&
-          "bg-paper-warm text-paper-fg hover:bg-paper-line",
+          "bg-paper-warm text-paper-fg ring-1 ring-paper-line hover:bg-paper-line",
         variant === "paper-quiet" &&
-          "text-paper-mid hover:bg-paper-warm hover:text-paper-fg",
+          "text-paper-mid ring-1 ring-paper-line/70 hover:bg-paper-warm hover:text-paper-fg",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+/** A square control for an icon — back, edit, close. Same surface rules. */
+export function IconButton({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      className={cn(
+        "press inline-flex size-8 items-center justify-center rounded-lg",
+        "bg-control text-fg-mid ring-1 ring-control-edge/60",
+        "hover:bg-control-hover hover:text-fg hover:ring-control-edge",
+        "disabled:pointer-events-none disabled:opacity-40",
         className
       )}
       {...props}

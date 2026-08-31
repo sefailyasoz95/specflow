@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWorkspace } from "@/store/workspace";
-import { Button, Empty, Eyebrow, Fact, Input } from "./ui/primitives";
+import { Button, Empty, Eyebrow, Fact, IconButton, Input } from "./ui/primitives";
 import { cn, hours } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 import { SprintEditor, TaskEditor } from "./editors";
@@ -69,12 +69,10 @@ export function Board() {
             ) : null}
 
             {sprint ? (
-              <button
-                onClick={() => setEditingSprint(sprint)}
-                className="press rounded-lg px-2 py-1 text-[12.5px] text-fg-dim hover:bg-ink-800 hover:text-fg"
-              >
+              <Button size="sm" variant="quiet" onClick={() => setEditingSprint(sprint)}>
+                <Pencil className="size-3" strokeWidth={2} />
                 Edit sprint
-              </button>
+              </Button>
             ) : null}
           </div>
 
@@ -109,7 +107,11 @@ export function Board() {
         </dl>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-6 overflow-y-auto pb-3 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Columns, not grid cells. In a grid a tall column stretches its
+          whole row, so "In progress" started halfway down the page because
+          "To do" was long. Each column now stands on its own and the row
+          scrolls sideways when there is not enough width. */}
+      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto overflow-y-auto pb-3">
         {TASK_STATUSES.map((status) => {
           const col = visible.filter((t) => t.status === status);
           return (
@@ -126,7 +128,8 @@ export function Board() {
                 setDragId(null);
               }}
               className={cn(
-                "flex min-h-32 flex-col rounded-xl transition-colors duration-150",
+                "flex min-h-32 w-[15.5rem] shrink-0 flex-col self-start rounded-xl p-1 transition-colors duration-150",
+                "lg:w-auto lg:flex-1 lg:basis-0",
                 overCol === status ? "bg-ink-850" : "bg-transparent"
               )}
             >
@@ -395,15 +398,13 @@ export function SprintsView() {
                   </div>
                 </button>
 
-                <button
+                <IconButton
                   onClick={() => setEditing(s)}
                   aria-label={`Edit ${s.name}`}
-                  className="press absolute right-3 top-3 rounded-lg p-2 text-fg-dim opacity-0
-                             transition-opacity duration-150 hover:bg-ink-700 hover:text-fg
-                             focus-visible:opacity-100 group-hover/sprint:opacity-100"
+                  className="absolute right-3 top-3"
                 >
                   <Pencil className="size-3.5" strokeWidth={2} />
-                </button>
+                </IconButton>
               </li>
             );
           })}

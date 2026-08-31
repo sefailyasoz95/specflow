@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useWorkspace } from "@/store/workspace";
 import { useWebMCP } from "@/webmcp/use-webmcp";
 import { buildProjectTools } from "@/webmcp/tools";
@@ -40,10 +41,12 @@ export function WorkspaceShell() {
         <div className="flex min-w-0 items-baseline gap-3">
           <Link
             href="/projects"
-            className="press -ml-1 rounded px-1 text-[15px] text-fg-dim hover:text-fg"
             aria-label="All projects"
+            className="press inline-flex size-8 items-center justify-center rounded-lg
+                       bg-control text-fg-mid ring-1 ring-control-edge/60
+                       hover:bg-control-hover hover:text-fg hover:ring-control-edge"
           >
-            ←
+            <ArrowLeft className="size-4" strokeWidth={2} />
           </Link>
           <h1 className="display truncate text-[19px] text-fg">{project.name}</h1>
         </div>

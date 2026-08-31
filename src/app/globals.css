@@ -29,8 +29,14 @@
   --color-ink-hair: #1a212a;
 
   --color-fg:       #e6e9ed;
-  --color-fg-mid:   #98a2ae;
-  --color-fg-dim:   #64707e;
+  --color-fg-mid:   #a3adba;
+  --color-fg-dim:   #828e9c;
+
+  /* Controls need to read as objects. The old button surface sat at
+     1.20:1 against the page, which is not a shape — it is a rumour. */
+  --color-control:       #2a3441;
+  --color-control-hover: #35414f;
+  --color-control-edge:  #3d4a5a;
 
   /* --- paper: the proposal ----------------------------------------- */
   --color-paper:      #f7f4ed;
@@ -38,7 +44,7 @@
   --color-paper-line: #ddd6c8;
   --color-paper-fg:   #1b1f23;
   --color-paper-mid:  #5c6470;
-  --color-paper-dim:  #8b8578;
+  --color-paper-dim:  #6b665a;
 
   /* --- diff, on paper ---------------------------------------------- */
   --color-add:        #12704f;
