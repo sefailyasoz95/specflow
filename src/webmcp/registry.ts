@@ -168,8 +168,13 @@ export async function registerTools(
       done.push(tool.name);
     } catch (error) {
       release();
-      // One bad tool must not cost the page its whole surface.
-      console.warn(`[webmcp] could not register "${tool.name}"`, error);
+      // An abort is us — React tore the page down (or Strict Mode ran the
+      // effect twice) while registration was still in flight. That is the
+      // handover working, not a failure, so it stays quiet.
+      if (!pageSignal.aborted && !controller.signal.aborted) {
+        // One bad tool must not cost the page its whole surface.
+        console.warn(`[webmcp] could not register "${tool.name}"`, error);
+      }
     }
   }
 

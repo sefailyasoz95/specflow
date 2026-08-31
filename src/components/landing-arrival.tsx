@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Typewriter } from "./typewriter";
 import { useWebMCP } from "@/webmcp/use-webmcp";
@@ -33,28 +33,46 @@ const CHOICES = [
   { id: "signin", label: "I already have an account", href: "/login" },
 ] as const;
 
-/** Optional. Drop a short file at /public/sounds/arrive.mp3 and it plays
- *  on the first real gesture — never on load, which browsers block and
- *  visitors resent. */
-function useChime() {
-  const el = useRef<HTMLAudioElement | null>(null);
+/* Optional. Drop a short file at /public/sounds/arrive.mp3 and it plays
+   on the gesture — never on load, which browsers block and visitors
+   resent.
+
+   The element lives at module scope, not in the component: the click that
+   plays it also navigates away, and an element owned by an unmounting
+   component can be collected mid-sound. The module outlives the route. */
+let chimeEl: HTMLAudioElement | null = null;
+
+function playChime() {
+  if (typeof window === "undefined") return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  if (!chimeEl) {
+    chimeEl = new Audio("/sounds/arrive.mp3");
+    chimeEl.volume = 0.35;
+    chimeEl.preload = "auto";
+  }
+  // Restart, so a second click is heard rather than swallowed.
+  chimeEl.currentTime = 0;
+  chimeEl.play().catch(() => {
+    /* no file, or the browser declined. Silence is a fine outcome. */
+  });
+}
+
+/** Warm the file up so the first click is not the first network request. */
+function useChimePreload() {
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (chimeEl) return;
     const audio = new Audio("/sounds/arrive.mp3");
     audio.volume = 0.35;
     audio.preload = "auto";
-    el.current = audio;
+    chimeEl = audio;
   }, []);
-  return () => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    el.current?.play().catch(() => {
-      /* no file, or the browser said no. Silence is a fine outcome. */
-    });
-  };
 }
 
 export function LandingArrival() {
   const router = useRouter();
-  const chime = useChime();
+  useChimePreload();
   const [step, setStep] = useState(0);
 
   const { surface, toolNames } = useWebMCP(() => buildLandingTools(router));
@@ -136,7 +154,7 @@ export function LandingArrival() {
             <button
               key={choice.id}
               onClick={() => {
-                chime();
+                playChime();
                 router.push(choice.href);
               }}
               className={cn(
