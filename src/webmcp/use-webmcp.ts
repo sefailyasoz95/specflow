@@ -13,7 +13,12 @@ import { registerTools, type Surface, type ToolDescriptor } from "./registry";
  */
 export function useWebMCP(build: () => ToolDescriptor[]) {
   const latest = useRef<ToolDescriptor[]>(build());
-  latest.current = build();
+
+  // Rebuilt after every commit, so a tool called later runs against the
+  // state the human can actually see.
+  useEffect(() => {
+    latest.current = build();
+  });
 
   const [surface, setSurface] = useState<Surface>("unavailable");
   const [toolNames, setToolNames] = useState<string[]>([]);
@@ -35,6 +40,27 @@ export function useWebMCP(build: () => ToolDescriptor[]) {
       },
     }));
 
+    /* Same descriptors, reachable from the console. Lets you exercise the
+       exact tool an agent would call in a browser that has no WebMCP yet —
+       and is how the eval harness drives the page. It grants nothing the
+       page's own UI does not already do in this session. */
+    const bridge = {
+      list: () =>
+        stable.map((t) => ({
+          name: t.name,
+          description: t.description,
+          inputSchema: t.inputSchema,
+        })),
+      call: (name: string, input: Record<string, unknown> = {}) => {
+        const tool = stable.find((t) => t.name === name);
+        if (!tool) {
+          return Promise.reject(new Error(`No tool named "${name}"`));
+        }
+        return Promise.resolve(tool.execute(input));
+      },
+    };
+    (window as unknown as { __webmcp?: typeof bridge }).__webmcp = bridge;
+
     registerTools(stable).then((res) => {
       if (disposed) {
         res.dispose();
@@ -49,8 +75,8 @@ export function useWebMCP(build: () => ToolDescriptor[]) {
     return () => {
       disposed = true;
       dispose();
+      delete (window as unknown as { __webmcp?: unknown }).__webmcp;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { surface, toolNames, ready };

@@ -2,40 +2,53 @@
 
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/store/workspace";
+import type { ApprovalRequest, WorkspaceValue } from "@/store/workspace";
+import type { ChangeSet } from "@/lib/types";
 import { DiffView, diffCounts } from "./diff-view";
 import { Badge, Button, Input } from "./ui/primitives";
 import { cn } from "@/lib/utils";
 
 export function ApprovalDialog() {
   const ws = useWorkspace();
-  const { approvalRequest, changeSets, resolveApproval } = ws;
-  const [busy, setBusy] = useState(false);
-  const [reason, setReason] = useState("");
-  const [showReason, setShowReason] = useState(false);
-
+  const { approvalRequest, changeSets } = ws;
   const cs = changeSets.find((c) => c.id === approvalRequest?.changeSetId);
-
-  useEffect(() => {
-    if (!approvalRequest) {
-      setReason("");
-      setShowReason(false);
-      setBusy(false);
-    }
-  }, [approvalRequest]);
-
-  useEffect(() => {
-    if (!approvalRequest) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") void decide("rejected");
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [approvalRequest, reason]);
 
   if (!approvalRequest || !cs) return null;
 
+  // Keyed on the request, so every new ask starts with clean local state
+  // instead of an effect resetting the old one.
+  return (
+    <Dialog key={approvalRequest.changeSetId} request={approvalRequest} cs={cs} ws={ws} />
+  );
+}
+
+function Dialog({
+  request,
+  cs,
+  ws,
+}: {
+  request: ApprovalRequest;
+  cs: ChangeSet;
+  ws: WorkspaceValue;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [reason, setReason] = useState("");
+  const [showReason, setShowReason] = useState(false);
+  const { resolveApproval } = ws;
+
   const counts = diffCounts({ ...ws, operations: cs.operations });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || busy) return;
+      setBusy(true);
+      void resolveApproval("rejected", reason || undefined).finally(() =>
+        setBusy(false)
+      );
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, reason, resolveApproval]);
 
   async function decide(decision: "approved" | "rejected") {
     if (busy) return;
@@ -54,10 +67,10 @@ export function ApprovalDialog() {
       aria-modal="true"
       aria-label="Agent is asking for approval"
     >
-      {/* Scrim: a plain fade. Nothing to draw attention away from the diff. */}
-      <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px] enter" />
+      {/* Scrim: a plain fade — nothing to pull the eye off the diff. */}
+      <div className="enter absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
 
-      {/* Modals are centred — they are not anchored to a trigger. */}
+      {/* Modals are centred; they are not anchored to a trigger. */}
       <div
         className={cn(
           "enter relative flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden",
@@ -79,9 +92,9 @@ export function ApprovalDialog() {
                 {cs.summary}
               </p>
             ) : null}
-            {approvalRequest.note ? (
+            {request.note ? (
               <p className="mt-2 rounded-lg border border-agent/25 bg-agent/[0.06] px-2.5 py-1.5 text-[12.5px] text-agent">
-                {approvalRequest.note}
+                {request.note}
               </p>
             ) : null}
           </div>
@@ -118,12 +131,18 @@ export function ApprovalDialog() {
             </p>
             <Button
               variant="ghost"
-              onClick={() => (showReason ? void decide("rejected") : setShowReason(true))}
+              onClick={() =>
+                showReason ? void decide("rejected") : setShowReason(true)
+              }
               disabled={busy}
             >
               Reject
             </Button>
-            <Button variant="agent" onClick={() => void decide("approved")} disabled={busy}>
+            <Button
+              variant="agent"
+              onClick={() => void decide("approved")}
+              disabled={busy}
+            >
               {busy ? "Applying…" : `Approve ${cs.operations.length} changes`}
             </Button>
           </div>

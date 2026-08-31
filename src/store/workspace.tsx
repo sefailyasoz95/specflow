@@ -68,6 +68,7 @@ export type WorkspaceValue = Snapshot & {
   agentEvents: AgentEvent[];
   logAgent: (e: Omit<AgentEvent, "id" | "at">) => void;
   loading: boolean;
+  snapshotRef: React.RefObject<Snapshot>;
   refresh: () => Promise<void>;
   proposeChangeSet: (
     title: string,
@@ -122,10 +123,20 @@ export function WorkspaceProvider({
   });
 
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* Tools can fire faster than React re-renders. Anything a tool reads to
+     make a decision comes from here, not from a render closure. */
+  const snapshotRef = useRef<Snapshot>(initial);
   const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(
     null
   );
   const approvalResolver = useRef<((o: ApprovalOutcome) => void) | null>(null);
+
+  // Keep the ref in step with every committed render, including the
+  // optimistic updates that never go through refresh().
+  useEffect(() => {
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
 
   const setUi = useCallback((patch: Partial<UiState>) => {
     setUiState((prev) => ({ ...prev, ...patch }));
@@ -160,13 +171,17 @@ export function WorkspaceProvider({
         .order("created_at", { ascending: false })
         .limit(30),
     ]);
-    setSnapshot((prev) => ({
-      project: prev.project,
+    const next: Snapshot = {
+      project: snapshotRef.current.project,
       requirements: (reqs.data ?? []) as Requirement[],
       sprints: (sprints.data ?? []) as Sprint[],
       tasks: (tasks.data ?? []) as Task[],
       changeSets: (changeSets.data ?? []) as ChangeSet[],
-    }));
+    };
+    // Set before the state update so a tool firing in the same tick as the
+    // refresh already sees the new ids.
+    snapshotRef.current = next;
+    setSnapshot(next);
     setLoading(false);
   }, [supabase, projectId]);
 
@@ -367,6 +382,7 @@ export function WorkspaceProvider({
     agentEvents,
     logAgent,
     loading,
+    snapshotRef,
     refresh,
     proposeChangeSet,
     approvalRequest,

@@ -34,7 +34,12 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
     proposeChangeSet,
     requestApproval,
     discardChangeSet,
+    snapshotRef,
   } = ws;
+
+  /* Freshest change sets, even if a tool fires before React re-renders. */
+  const livePending = () =>
+    snapshotRef.current.changeSets.filter((c) => c.status === "pending");
 
   const sprintName = (id: string | null) =>
     id ? sprints.find((s) => s.id === id)?.name ?? "—" : "Backlog";
@@ -380,7 +385,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
         },
       },
       execute: async (input, options) => {
-        const pending = changeSets.filter((c) => c.status === "pending");
+        const pending = livePending();
         if (pending.length === 0) {
           return "There is no pending change set to apply. Create one with propose_plan or propose_task_changes first.";
         }
@@ -439,7 +444,7 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
         },
       },
       execute: async (input) => {
-        const pending = changeSets.filter((c) => c.status === "pending");
+        const pending = livePending();
         const target = input.changeSetId
           ? pending.find((c) => c.id === input.changeSetId)
           : pending[0];
