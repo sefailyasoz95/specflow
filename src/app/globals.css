@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * SpecFlow design system
+ *
+ * Monochrome surface + one signal colour.
+ *   orange  → the agent channel (proposals, presence, highlight)
+ *   emerald → additions in a diff
+ *   blue    → modifications in a diff
+ *   rose    → removals in a diff
+ * Nothing else is coloured. Colour means something here.
+ * ------------------------------------------------------------------ */
+
+@theme {
+  --color-canvas:    #09090b;
+  --color-surface:   #101013;
+  --color-raised:    #17171b;
+  --color-hover:     #1d1d22;
+  --color-line:      #232329;
+  --color-line-soft: #1b1b20;
+
+  --color-ink:       #ececef;
+  --color-ink-dim:   #a1a1aa;
+  --color-ink-faint: #6b6b75;
+
+  --color-agent:      #ff6b35;
+  --color-agent-dim:  #b8481f;
+  --color-agent-wash: #ff6b350f;
+
+  --color-add:    #3fbf7f;
+  --color-mod:    #4a9eff;
+  --color-remove: #f4566a;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --ease-out-quart: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-quart: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-canvas);
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-agent) 30%, transparent);
+  color: #fff;
+}
+
+/* Scrollbars: present but quiet. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: #2e2e36; }
+
+/* ------------------------------------------------------ press feedback */
+/* 160ms ease-out, transform only — GPU, no layout. */
+.press {
+  transition: transform 160ms var(--ease-out-quart),
+              background-color 160ms var(--ease-out-quart),
+              border-color 160ms var(--ease-out-quart),
+              color 160ms var(--ease-out-quart);
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* --------------------------------------------------- entry transitions */
+/* Transitions retarget mid-flight; keyframes restart. Prefer these. */
+
+.enter {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 220ms var(--ease-out-quart),
+              transform 220ms var(--ease-out-quart);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+.enter-panel {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 260ms var(--ease-drawer),
+              transform 260ms var(--ease-drawer);
+  @starting-style {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+/* Stagger: 40ms between siblings, decorative only, capped so long
+   lists never feel like they are loading. */
+.stagger > * { animation: sf-rise 260ms var(--ease-out-quart) both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(n+6) { animation-delay: 200ms; }
+
+@keyframes sf-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* -------------------------------------------------------- agent pulse */
+/* Rare event (agent takes the floor) → delight is allowed here. */
+@keyframes sf-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-agent) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 7px color-mix(in oklab, var(--color-agent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-agent) 0%, transparent); }
+}
+.agent-pulse { animation: sf-pulse 1.8s var(--ease-out-quart) infinite; }
+
+/* Ring the agent draws around whatever it is talking about. */
+.sf-highlight {
+  position: relative;
+  outline: 1.5px solid var(--color-agent);
+  outline-offset: 2px;
+  border-radius: 10px;
+  transition: outline-color 400ms var(--ease-out-quart);
+}
+
+/* ------------------------------------------------------------ a11y */
+@media (prefers-reduced-motion: reduce) {
+  .press:active { transform: none; }
+  .enter, .enter-panel {
+    transition: opacity 200ms ease;
+    @starting-style { opacity: 0; transform: none; }
+  }
+  .stagger > * { animation: sf-fade 200ms ease both; }
+  .agent-pulse { animation: none; }
+  @keyframes sf-fade { from { opacity: 0 } to { opacity: 1 } }
+}
+
+/* Hover effects only where a real pointer exists. */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    background: var(--color-hover);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-agent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
