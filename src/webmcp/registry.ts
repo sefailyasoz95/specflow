@@ -87,8 +87,12 @@ export function detectSurface(): Surface {
 }
 
 /** Everything we probed and what we found. Shown in the badge when
- *  nothing is detected, so "off" is a diagnosis rather than a shrug. */
-export function probe(): Record<string, string> {
+ *  nothing is detected, so "off" is a diagnosis rather than a shrug.
+ *
+ *  Browser-only by nature: the server has no navigator and no secure
+ *  context, so rendering this during SSR produced a hydration mismatch.
+ *  Read it through `useProbe` instead of calling it in a render. */
+function readProbe(): Record<string, string> {
   const shape = (ctx: AnyContext | null) =>
     !ctx
       ? "absent"
@@ -104,10 +108,30 @@ export function probe(): Record<string, string> {
     "document.modelContext": shape(documentContext()),
     "navigator.modelContext": shape(navigatorContext()),
     "navigator.modelContextTesting": shape(testingContext()),
-    secureContext:
-      typeof window === "undefined" ? "unknown" : String(window.isSecureContext),
+    secureContext: String(window.isSecureContext),
   };
 }
+
+/* Computed once. useSyncExternalStore needs a stable reference or it
+   re-renders forever. */
+let cachedProbe: Record<string, string> | null = null;
+const noSubscribe = () => () => {};
+
+export function probeSnapshot(): Record<string, string> {
+  if (!cachedProbe) cachedProbe = readProbe();
+  return cachedProbe;
+}
+
+/** null on the server, so nothing is rendered until the client knows. */
+export function serverProbe(): null {
+  return null;
+}
+
+export const probeStore = {
+  subscribe: noSubscribe,
+  getSnapshot: probeSnapshot,
+  getServerSnapshot: serverProbe,
+};
 
 /** What this document currently has registered, by tool name. */
 const live = new Map<string, () => void>();

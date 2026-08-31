@@ -6,7 +6,8 @@ import { PatchStat } from "./patch";
 import { AUTHOR_LABEL, ReviewSheet } from "./review-sheet";
 import { Button, Eyebrow, Fact } from "./ui/primitives";
 import { cn } from "@/lib/utils";
-import { probe, type Surface } from "@/webmcp/registry";
+import type { Surface } from "@/webmcp/registry";
+import { useProbe } from "@/webmcp/use-probe";
 
 const SURFACE_LABEL: Record<Surface, string> = {
   "document.modelContext": "document.modelContext",
@@ -24,6 +25,7 @@ export function WebMCPStatus({
   toolNames: string[];
 }) {
   const [open, setOpen] = useState(false);
+  const found = useProbe();
   const live = surface !== "unavailable";
 
   return (
@@ -63,14 +65,16 @@ export function WebMCPStatus({
             <div className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-fg-dim">
               {/* "Off" should be a diagnosis, not a shrug — these are the
                   surfaces we looked for and what was actually there. */}
-              <ul className="space-y-0.5 rounded-lg bg-ink-900 p-2.5 font-mono text-[11px]">
-                {Object.entries(probe()).map(([key, found]) => (
-                  <li key={key} className="flex gap-2">
-                    <span className="text-fg-dim">{key}</span>
-                    <span className="ml-auto text-fg-mid">{found}</span>
-                  </li>
-                ))}
-              </ul>
+              {found ? (
+                <ul className="space-y-0.5 rounded-lg bg-ink-900 p-2.5 font-mono text-[11px]">
+                  {Object.entries(found).map(([key, value]) => (
+                    <li key={key} className="flex gap-2">
+                      <span className="text-fg-dim">{key}</span>
+                      <span className="ml-auto text-fg-mid">{value}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <p>
                 The tools register the moment a WebMCP-capable browser is
                 present. In Chrome:

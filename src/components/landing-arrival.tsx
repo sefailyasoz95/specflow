@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Typewriter } from "./typewriter";
 import { useWebMCP } from "@/webmcp/use-webmcp";
-import { probe, type ToolDescriptor } from "@/webmcp/registry";
+import type { ToolDescriptor } from "@/webmcp/registry";
+import { useProbe } from "@/webmcp/use-probe";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ *
@@ -76,6 +77,7 @@ export function LandingArrival() {
   const [step, setStep] = useState(0);
 
   const { surface, toolNames } = useWebMCP(() => buildLandingTools(router));
+  const found = useProbe();
   const live = surface !== "unavailable";
 
   /* One orchestrated sequence, not scattered effects. The eyebrow and
@@ -148,14 +150,16 @@ export function LandingArrival() {
             {/* What we actually looked for. "Off" should be something you
                 can act on, not a shrug — and the surfaces are still moving,
                 so naming them is worth the space. */}
-            <ul className="mt-3 space-y-0.5 rounded-lg bg-ink-850 p-2.5 font-mono text-[11px]">
-              {Object.entries(probe()).map(([key, found]) => (
-                <li key={key} className="flex gap-3">
-                  <span className="text-fg-dim">{key}</span>
-                  <span className="ml-auto text-fg-mid">{found}</span>
-                </li>
-              ))}
-            </ul>
+            {found ? (
+              <ul className="mt-3 space-y-0.5 rounded-lg bg-ink-850 p-2.5 font-mono text-[11px]">
+                {Object.entries(found).map(([key, value]) => (
+                  <li key={key} className="flex gap-3">
+                    <span className="text-fg-dim">{key}</span>
+                    <span className="ml-auto text-fg-mid">{value}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         )}
       </Reveal>
