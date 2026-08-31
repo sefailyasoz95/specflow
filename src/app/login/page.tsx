@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AuthForm } from "@/components/auth-form";
 
@@ -12,7 +13,11 @@ export default function LoginPage() {
           Pick up where your agent left off.
         </p>
       </div>
-      <AuthForm mode="login" />
+      {/* AuthForm reads a query parameter, and this page is statically
+          rendered — without a boundary the build refuses it. */}
+      <Suspense fallback={<div className="h-[19rem] w-full max-w-sm" />}>
+        <AuthForm mode="login" />
+      </Suspense>
     </main>
   );
 }

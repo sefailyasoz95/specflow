@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AuthForm } from "@/components/auth-form";
 
@@ -12,7 +13,9 @@ export default function SignupPage() {
           One account, one workspace your agent can propose into.
         </p>
       </div>
-      <AuthForm mode="signup" />
+      <Suspense fallback={<div className="h-[19rem] w-full max-w-sm" />}>
+        <AuthForm mode="signup" />
+      </Suspense>
     </main>
   );
 }
