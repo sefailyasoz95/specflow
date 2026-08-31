@@ -4,7 +4,15 @@ import { useState } from "react";
 import { useWorkspace } from "@/store/workspace";
 import { Button, Empty, Eyebrow, Fact, Input } from "./ui/primitives";
 import { cn, hours } from "@/lib/utils";
-import { TASK_STATUSES, TASK_STATUS_LABEL, type TaskStatus } from "@/lib/types";
+import { Pencil } from "lucide-react";
+import { SprintEditor, TaskEditor } from "./editors";
+import {
+  TASK_STATUSES,
+  TASK_STATUS_LABEL,
+  type Sprint,
+  type Task,
+  type TaskStatus,
+} from "@/lib/types";
 
 /* ---------------------------------------------------------------- board */
 
@@ -14,6 +22,8 @@ export function Board() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<TaskStatus | null>(null);
   const [draft, setDraft] = useState("");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingSprint, setEditingSprint] = useState<Sprint | null>(null);
 
   const visible = tasks.filter((t) => {
     if (ui.activeSprintId === "__backlog__") return t.sprint_id === null;
@@ -55,6 +65,15 @@ export function Board() {
                   ×
                 </span>
                 <span className="sr-only">Clear the status filter</span>
+              </button>
+            ) : null}
+
+            {sprint ? (
+              <button
+                onClick={() => setEditingSprint(sprint)}
+                className="press rounded-lg px-2 py-1 text-[12.5px] text-fg-dim hover:bg-ink-800 hover:text-fg"
+              >
+                Edit sprint
               </button>
             ) : null}
           </div>
@@ -127,8 +146,17 @@ export function Board() {
                     <li
                       key={t.id}
                       draggable
+                      role="button"
+                      tabIndex={0}
                       onDragStart={() => setDragId(t.id)}
                       onDragEnd={() => setDragId(null)}
+                      onClick={() => setEditingTask(t)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setEditingTask(t);
+                        }
+                      }}
                       className={cn(
                         "lift press cursor-grab rounded-lg bg-ink-800 px-3 py-2.5 active:cursor-grabbing",
                         pointedAt && "pointed-at",
@@ -188,6 +216,21 @@ export function Board() {
           Add
         </Button>
       </form>
+
+      {editingTask ? (
+        <TaskEditor
+          key={editingTask.id}
+          task={tasks.find((t) => t.id === editingTask.id) ?? editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      ) : null}
+      {editingSprint ? (
+        <SprintEditor
+          key={editingSprint.id}
+          sprint={sprints.find((s) => s.id === editingSprint.id) ?? editingSprint}
+          onClose={() => setEditingSprint(null)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -292,6 +335,7 @@ export function RequirementsView() {
 export function SprintsView() {
   const { sprints, tasks, highlight, setUi, createSprintDirect } = useWorkspace();
   const [draft, setDraft] = useState("");
+  const [editing, setEditing] = useState<Sprint | null>(null);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -317,11 +361,11 @@ export function SprintsView() {
             const pct = inSprint.length ? (done / inSprint.length) * 100 : 0;
 
             return (
-              <li key={s.id}>
+              <li key={s.id} className="group/sprint relative">
                 <button
                   onClick={() => setUi({ view: "board", activeSprintId: s.id })}
                   className={cn(
-                    "press lift w-full rounded-xl px-3 py-3.5 text-left",
+                    "press lift w-full rounded-xl px-3 py-3.5 pr-12 text-left",
                     pointedAt && "pointed-at"
                   )}
                 >
@@ -350,6 +394,16 @@ export function SprintsView() {
                     />
                   </div>
                 </button>
+
+                <button
+                  onClick={() => setEditing(s)}
+                  aria-label={`Edit ${s.name}`}
+                  className="press absolute right-3 top-3 rounded-lg p-2 text-fg-dim opacity-0
+                             transition-opacity duration-150 hover:bg-ink-700 hover:text-fg
+                             focus-visible:opacity-100 group-hover/sprint:opacity-100"
+                >
+                  <Pencil className="size-3.5" strokeWidth={2} />
+                </button>
               </li>
             );
           })}
@@ -375,6 +429,14 @@ export function SprintsView() {
           Add
         </Button>
       </form>
+
+      {editing ? (
+        <SprintEditor
+          key={editing.id}
+          sprint={sprints.find((s) => s.id === editing.id) ?? editing}
+          onClose={() => setEditing(null)}
+        />
+      ) : null}
     </div>
   );
 }

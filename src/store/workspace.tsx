@@ -93,6 +93,8 @@ export type WorkspaceValue = Snapshot & {
   updateTaskDirect: (id: string, patch: Partial<Task>) => Promise<void>;
   deleteTaskDirect: (id: string) => Promise<void>;
   createSprintDirect: (name: string, goal?: string) => Promise<void>;
+  updateSprintDirect: (id: string, patch: Partial<Sprint>) => Promise<void>;
+  deleteSprintDirect: (id: string) => Promise<void>;
   createRequirementDirect: (title: string, description?: string) => Promise<void>;
 };
 
@@ -394,6 +396,44 @@ export function WorkspaceProvider({
     [supabase, projectId, snapshot.sprints.length, refresh, offline, commit]
   );
 
+  const updateSprintDirect = useCallback(
+    async (id: string, patch: Partial<Sprint>) => {
+      commit((prev) => ({
+        ...prev,
+        sprints: prev.sprints.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+      }));
+      if (offline) return;
+      const { error } = await supabase.from("sprints").update(patch).eq("id", id);
+      if (error) {
+        await refresh();
+        throw new Error(error.message);
+      }
+    },
+    [supabase, refresh, offline, commit]
+  );
+
+  const deleteSprintDirect = useCallback(
+    async (id: string) => {
+      /* Tasks are not deleted with the sprint — the schema sets their
+         sprint_id to null, so work you planned lands back in the backlog
+         rather than disappearing with the container. */
+      commit((prev) => ({
+        ...prev,
+        sprints: prev.sprints.filter((s) => s.id !== id),
+        tasks: prev.tasks.map((t) =>
+          t.sprint_id === id ? { ...t, sprint_id: null } : t
+        ),
+      }));
+      if (offline) return;
+      const { error } = await supabase.from("sprints").delete().eq("id", id);
+      if (error) {
+        await refresh();
+        throw new Error(error.message);
+      }
+    },
+    [supabase, refresh, offline, commit]
+  );
+
   const createRequirementDirect = useCallback(
     async (title: string, description?: string) => {
       if (offline) {
@@ -489,6 +529,8 @@ export function WorkspaceProvider({
     updateTaskDirect,
     deleteTaskDirect,
     createSprintDirect,
+    updateSprintDirect,
+    deleteSprintDirect,
     createRequirementDirect,
   };
 
