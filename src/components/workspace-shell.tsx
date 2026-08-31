@@ -7,8 +7,13 @@ import { buildProjectTools } from "@/webmcp/tools";
 import { AgentActivity, ProposalList, WebMCPStatus } from "./review-rail";
 import { ApprovalDialog } from "./approval-dialog";
 import { Board, RequirementsView, SprintsView } from "./views";
-import { cn } from "@/lib/utils";
+import { Select } from "./ui/select";
+import { cn, hours } from "@/lib/utils";
 import type { UiState } from "@/store/workspace";
+
+/* Radix reserves the empty string, so "all work" needs a real value. */
+const ALL = "__all__";
+const BACKLOG = "__backlog__";
 
 const VIEWS: { id: UiState["view"]; label: string }[] = [
   { id: "board", label: "Board" },
@@ -18,7 +23,7 @@ const VIEWS: { id: UiState["view"]; label: string }[] = [
 
 export function WorkspaceShell() {
   const ws = useWorkspace();
-  const { project, sprints, ui, setUi, changeSets } = ws;
+  const { project, sprints, tasks, ui, setUi, changeSets } = ws;
   const { surface, toolNames } = useWebMCP(() => buildProjectTools(ws));
   const waiting = changeSets.filter((c) => c.status === "pending").length;
 
@@ -55,19 +60,38 @@ export function WorkspaceShell() {
         </nav>
 
         {ui.view === "board" ? (
-          <select
-            value={ui.activeSprintId ?? ""}
-            onChange={(e) => setUi({ activeSprintId: e.target.value || null })}
-            className="press h-8 rounded-lg bg-ink-800 px-2.5 text-[12.5px] text-fg-mid focus:outline-none"
-          >
-            <option value="">All work</option>
-            <option value="__backlog__">Backlog only</option>
-            {sprints.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            ariaLabel="Filter the board by sprint"
+            value={ui.activeSprintId ?? ALL}
+            onValueChange={(v) =>
+              setUi({ activeSprintId: v === ALL ? null : v })
+            }
+            groups={[
+              {
+                items: [
+                  { value: ALL, label: "All work", hint: `${tasks.length}` },
+                  {
+                    value: BACKLOG,
+                    label: "Backlog only",
+                    hint: `${tasks.filter((t) => t.sprint_id === null).length}`,
+                  },
+                ],
+              },
+              {
+                label: "Sprints",
+                items: sprints.map((s) => {
+                  const inSprint = tasks.filter((t) => t.sprint_id === s.id);
+                  return {
+                    value: s.id,
+                    label: s.name,
+                    hint: hours(
+                      inSprint.reduce((sum, t) => sum + (t.estimate_hours ?? 0), 0)
+                    ),
+                  };
+                }),
+              },
+            ]}
+          />
         ) : null}
 
         <div className="ml-auto">

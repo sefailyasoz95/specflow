@@ -145,6 +145,25 @@ body {
   @starting-style { opacity: 0; }
 }
 
+/* Popovers scale from their trigger, not their own centre — the spatial
+   relationship between the control and what it opened stays obvious.
+   Exit is faster than entry: you have already decided by then. */
+.popover {
+  transform-origin: var(--radix-select-content-transform-origin,
+                        var(--radix-popper-transform-origin, top center));
+}
+/* Entry only. An exit animation here keeps Radix's Presence waiting on an
+   animationend that never lands, so the menu stays mounted after it
+   closes — and a filter this frequent should close the instant you pick
+   anyway. Nothing is lost. */
+.popover[data-state="open"] {
+  animation: popover-in 150ms var(--ease-out-quart);
+}
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-2px) }
+  to   { opacity: 1; transform: scale(1) translateY(0) }
+}
+
 /* Cascade for lists that appear together. Decorative, never blocking. */
 .stagger > * { animation: rise 300ms var(--ease-out-quart) both; }
 .stagger > *:nth-child(1) { animation-delay: 0ms }
@@ -182,6 +201,7 @@ body {
     @starting-style { opacity: 0; transform: none; filter: none }
   }
   .stagger > * { animation: fade 180ms ease both }
+  .popover[data-state="open"] { animation: fade 140ms ease }
   .waiting-dot { animation: none }
   @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
 }
