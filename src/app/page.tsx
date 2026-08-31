@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LandingAgent } from "@/components/landing-agent";
+import { LandingArrival } from "@/components/landing-arrival";
 import { LandingPatch } from "@/components/landing-patch";
 
 const TOOLS: [string, string][] = [
@@ -20,7 +20,6 @@ export default function Home() {
       <header className="mx-auto flex w-full max-w-6xl items-center gap-3 px-6 py-5">
         <span className="display text-[17px] text-fg">SpecFlow</span>
         <div className="ml-auto flex items-center gap-1">
-          <LandingAgent />
           <Link
             href="/login"
             className="press rounded-lg px-3 py-1.5 text-[13px] text-fg-mid hover:bg-ink-800 hover:text-fg"
@@ -31,47 +30,15 @@ export default function Home() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6 pb-28">
-        {/* The hero is the artefact itself: a real change set, rendered by
-            the same component the product uses. */}
-        <section className="grid items-center gap-12 pt-12 lg:grid-cols-[1fr_26rem] lg:gap-16 lg:pt-20">
-          <div className="enter">
-            <p className="eyebrow text-fg-dim">Built on WebMCP</p>
-
-            <h1 className="display mt-5 text-[46px] leading-[1.04] text-fg sm:text-[58px]">
-              Your agent doesn&apos;t
-              <br />
-              get write access.
-              <br />
-              <span className="text-fg-dim">It gets a pen.</span>
-            </h1>
-
-            <p className="mt-6 max-w-[46ch] text-[15px] leading-[1.6] text-fg-mid">
-              SpecFlow turns a rough brief into requirements, sprints, tasks and
-              estimates. Your agent does the decomposition inside the workspace
-              you already use — but every write tool it has produces a diff, not
-              a change. You read it. You sign it.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-2.5">
-              <Link
-                href="/signup"
-                className="press rounded-lg bg-fg px-4 py-2.5 text-[13.5px] font-medium text-ink-900 hover:bg-white"
-              >
-                Start planning
-              </Link>
-              <Link
-                href="/preview"
-                className="press rounded-lg px-4 py-2.5 text-[13.5px] text-fg-mid hover:bg-ink-800 hover:text-fg"
-              >
-                Look around first
-              </Link>
-            </div>
-          </div>
-
+        {/* The page introduces itself, shows what it just gave the
+            visitor's agent, and asks one question. The artefact sits
+            beside it as the proof. */}
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_25rem] lg:gap-16">
+          <LandingArrival />
           <div className="enter lg:mt-0">
             <LandingPatch />
           </div>
-        </section>
+        </div>
 
         {/* Three moves, and they really are a sequence, so they're numbered. */}
         <section className="mt-28 grid gap-10 sm:grid-cols-3 sm:gap-8">
