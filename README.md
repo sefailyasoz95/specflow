@@ -175,6 +175,15 @@ See [evals/README.md](./evals/README.md).
 Next.js (App Router) · TypeScript · Tailwind CSS · Supabase (Postgres, Auth,
 Realtime) · WebMCP
 
+## Credits
+
+The motion and interface work follows the design skills published at
+[emilkowalski/skills](https://github.com/emilkowalski/skills) — ease-out
+curves, transitions over keyframes, nothing over 300ms, and a reduced-motion
+path for every one of them. `skills-lock.json` records which skills were used
+and at what hash. The skill files themselves are not vendored here; they are
+not ours to redistribute.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).

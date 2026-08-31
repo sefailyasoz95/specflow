@@ -40,6 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Design skills, vendored locally for the build but not ours to
+# redistribute. They come from emilkowalski/skills; skills-lock.json
+# records exactly which ones and at what hash, which is the credit that
+# belongs in the repo. Re-fetch them rather than committing them.
+/.agents/
+/.claude/
+
 # skills installer artefact (duplicate of .agents/skills)
 /agent
 tsconfig.tsbuildinfo
