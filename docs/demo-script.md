@@ -23,10 +23,20 @@ agent half is being shown live, drive it with ChatGPT's Chrome extension in
 that same browser. Do not record in an in-app browser: neither ChatGPT's nor
 Claude's exposes WebMCP, and the badge will correctly say off.
 
-Keep project creation out of the critical path. The planner takes around a
-minute against a real brief, which is a third of the video; open on a
-project that already has a proposal waiting and show the review loop, which
-is the part nothing else does. Creation is a five-second cut.
+Keep project creation out of the critical path. The planner takes 55–56
+seconds against a real brief — a third of the video spent watching a
+spinner. Record it separately and cut to the result, or open on the guided
+demo, which is a real workspace with a proposal already waiting and needs no
+account (press "Show me a demo", or let the agent call `start_guided_demo`).
+
+If you have ten seconds spare at the end, run the evals on camera. Seven
+scenarios passing against production, in the console, is the shortest
+possible proof that the gate is real rather than described:
+
+```js
+const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
+await SprintfyEvals.run()
+```
 
 ## Recording notes
 

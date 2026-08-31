@@ -23,6 +23,26 @@ opinion about. Handing that to an agent as unsupervised INSERTs gets you a
 plan nobody trusts and everybody has to re-check — which is more work than
 writing it by hand.
 
+### How you start
+
+You do not start with an empty board. You give Sprintfy the thing you already
+have — a backlog note, a PRD as `.md`, `.txt`, `.pdf` or `.docx`, or a few
+paragraphs typed in — and it returns requirements, sprints, tasks and hour
+estimates, sequenced by risk rather than by comfort. A real Turkish brief
+produced 8 requirements, 4 sprints and 38 tasks in 56 seconds, in Turkish,
+with the database migration ranked critical and placed first.
+
+Two things about that flow are worth a judge's attention:
+
+- **The planner is held to the same rule as any agent.** Sprintfy's own model
+  call does not write the plan either. It authors a change set marked
+  `source: "planner"` and it lands in the same review panel, behind the same
+  gate. The product would not be worth much if its author exempted itself.
+- **It is allowed to refuse.** A brief that is filler, a repeated phrase, or a
+  question about something else comes back as "that does not read like a
+  project brief", with empty arrays — rather than an invented project produced
+  in order to look helpful.
+
 ### What Sprintfy does
 
 Sprintfy is a project planner — requirements, sprints, tasks, effort
@@ -90,6 +110,31 @@ Details worth a judge's time:
   sprint, filter the board, or draw a highlight ring around the one task it is
   talking about.
 
+### It is tested, and you can run the tests
+
+`/evals.js` is a seven-scenario suite that drives the *actual* `ToolDescriptor`
+objects the page registered — `window.__webmcp` hands back the same objects
+WebMCP received — so a pass means an agent calling that tool with that input
+gets that result. It runs against the live site, in the console, with no
+account:
+
+```js
+const s = await fetch('/evals.js').then(r => r.text()); (0,eval)(s);
+await SprintfyEvals.run()
+```
+
+Seven of seven pass in production. They assert the invariants rather than the
+happy path: a proposal writes zero rows and is visible to the very next call;
+a human's rejection arrives as the tool's return value; approval applies a
+sprint and its tasks in one transaction with `ref` ids resolved; hallucinated
+ids are refused outright rather than half-applied; and `focus` moves the view
+with `get_project_context` reporting it in the same tick.
+
+Two of these scenarios exist because they caught real bugs — an agent could
+not always see the proposal it had just written, and `focus` moved the view
+without the context reporting it. Both were React committing state after the
+tool call had already read it.
+
 ### Security
 
 Every table is under row-level security scoped to `auth.uid()`. The apply
@@ -105,14 +150,26 @@ Realtime) · WebMCP · deployed on Vercel
 
 ---
 
+## How to try it (put this near the top of the Devpost entry)
+
+**https://sprintfy.vercel.app**
+
+Open it in **desktop Chrome with `chrome://flags/#enable-webmcp-testing`
+enabled**, or in Chrome with the ChatGPT extension installed. That is the
+surface this was built and verified on. ChatGPT's *in-app* browser does not
+expose `document.modelContext` today, so the page will honestly report WebMCP
+as off there — it is not the tools being broken.
+
+**No account is needed to see the whole idea.** The landing page registers
+four tools before you sign in; ask your agent for `start_guided_demo`, or
+press "Show me a demo", and you land in a real workspace with a proposal
+waiting in the review panel and six tools live. Signing up is email and
+password, with no confirmation step.
+
 ## Submission checklist
 
-- [ ] Live URL, opened in desktop Chrome with `#enable-webmcp-testing`
-      enabled — that is the surface this was verified on. In-app browsers do
-      not expose WebMCP; say so in the submission so a judge does not test
-      it in one and conclude the tools are broken.
+- [x] Live URL — https://sprintfy.vercel.app
+- [x] Public repo with source, instructions and an OSI license (MIT)
+- [x] Seven of seven evals passing against production
 - [ ] Demo video under 3 minutes, on YouTube, public
-- [ ] Public repo with source, instructions and an OSI license (MIT — done)
 - [ ] Text description (this document)
-- [ ] Judge account credentials in the submission notes, so nobody bounces off
-      the sign-in wall
