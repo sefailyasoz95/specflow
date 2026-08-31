@@ -89,10 +89,15 @@ export function WebMCPStatus({
 
 /* ------------------------------------------------------------------ */
 
-export function ProposalList() {
+export function ProposalList({
+  openOnArrival = null,
+}: {
+  /** Set on a project's first run, so the plan you just waited for opens. */
+  openOnArrival?: string | null;
+}) {
   const ws = useWorkspace();
   const { changeSets, highlight, applyChangeSet, discardChangeSet } = ws;
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(openOnArrival);
 
   const pending = changeSets.filter((c) => c.status === "pending");
   const settled = changeSets.filter((c) => c.status !== "pending").slice(0, 6);

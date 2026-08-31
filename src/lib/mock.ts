@@ -8,6 +8,10 @@ const project: Project = {
   owner_id: uid(99),
   name: "Checkout rework",
   description: "Single-page checkout, guest flow, payment idempotency.",
+  tech_stack: ["Next.js", "TypeScript", "Stripe", "Postgres"],
+  start_date: null,
+  end_date: null,
+  sprint_length: "2_weeks",
   created_at: now,
 };
 
@@ -40,6 +44,8 @@ const sprints: Sprint[] = [
   goal: goal as string,
   position: i + 1,
   status: status as Sprint["status"],
+  start_date: null,
+  end_date: null,
   created_at: now,
 }));
 

@@ -20,6 +20,21 @@ export type Project = {
   owner_id: string;
   name: string;
   description: string | null;
+  tech_stack: string[];
+  start_date: string | null;
+  end_date: string | null;
+  sprint_length: string | null;
+  created_at: string;
+};
+
+/** The brief or PRD a project was planned from. Its provenance. */
+export type ProjectBrief = {
+  id: string;
+  project_id: string;
+  source: "written" | "upload";
+  file_name: string | null;
+  mime_type: string | null;
+  content: string;
   created_at: string;
 };
 
@@ -42,6 +57,8 @@ export type Sprint = {
   goal: string | null;
   position: number;
   status: SprintStatus;
+  start_date: string | null;
+  end_date: string | null;
   created_at: string;
 };
 
@@ -74,6 +91,8 @@ export type Op =
       name: string;
       goal?: string;
       status?: SprintStatus;
+      startDate?: string | null;
+      endDate?: string | null;
     }
   | {
       op: "create_task";
@@ -109,6 +128,8 @@ export type Op =
       name?: string;
       goal?: string;
       status?: SprintStatus;
+      startDate?: string | null;
+      endDate?: string | null;
     }
   | { op: "delete_task"; taskId: string };
 
@@ -137,6 +158,7 @@ export type Database = {
   public: {
     Tables: {
       projects: Row<Project>;
+      project_briefs: Row<ProjectBrief>;
       requirements: Row<Requirement>;
       sprints: Row<Sprint>;
       tasks: Row<Task>;

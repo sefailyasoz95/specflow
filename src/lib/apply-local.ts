@@ -52,6 +52,8 @@ export function applyOpsLocally(
           goal: op.goal ?? null,
           position: sprints.length + 1,
           status: op.status ?? "planned",
+          start_date: op.startDate ?? null,
+          end_date: op.endDate ?? null,
           created_at: now,
         });
         if (op.tempId) refs.set(op.tempId, sid);
@@ -114,6 +116,8 @@ export function applyOpsLocally(
             name: op.name ?? sprints[i].name,
             goal: op.goal ?? sprints[i].goal,
             status: op.status ?? sprints[i].status,
+            start_date: op.startDate ?? sprints[i].start_date,
+            end_date: op.endDate ?? sprints[i].end_date,
           };
         }
         break;

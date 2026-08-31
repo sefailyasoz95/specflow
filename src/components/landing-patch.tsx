@@ -13,6 +13,8 @@ const sprint: Sprint = {
   goal: "Collapse three steps into one.",
   position: 2,
   status: "planned",
+  start_date: null,
+  end_date: null,
   created_at: "",
 };
 

@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWebMCP } from "@/webmcp/use-webmcp";
 import type { ToolDescriptor } from "@/webmcp/registry";
 import { WebMCPStatus } from "./review-rail";
-import { Button, Empty, Eyebrow, Input, Textarea } from "./ui/primitives";
+import { Button, Empty } from "./ui/primitives";
 import type { Project } from "@/lib/types";
 
 export function ProjectsClient({
@@ -21,9 +21,6 @@ export function ProjectsClient({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [projects, setProjects] = useState(initialProjects);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [busy, setBusy] = useState(false);
 
   async function create(name: string, description?: string) {
     const {
@@ -150,40 +147,20 @@ export function ProjectsClient({
       )}
 
       <section className="mt-auto border-t border-ink-hair pt-6">
-        <Eyebrow>New project</Eyebrow>
-        <form
-          className="mt-3 space-y-2"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!name.trim() || busy) return;
-            setBusy(true);
-            try {
-              const p = await create(name.trim(), description.trim() || undefined);
-              setName("");
-              setDescription("");
-              router.push(`/projects/${p.id}`);
-            } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Could not create the project");
-            } finally {
-              setBusy(false);
-            }
-          }}
+        <Link
+          href="/projects/new"
+          className="press lift flex items-center gap-4 rounded-xl bg-ink-850 px-4 py-4"
         >
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Project name"
-          />
-          <Textarea
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What is this project? (optional)"
-          />
-          <Button type="submit" variant="solid" disabled={!name.trim() || busy}>
-            Create
-          </Button>
-        </form>
+          <div className="min-w-0">
+            <p className="display text-[17px] text-fg">Start a project</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-fg-dim">
+              Paste a brief or upload a PRD. It comes back as a plan you approve.
+            </p>
+          </div>
+          <span aria-hidden className="ml-auto font-mono text-[15px] text-fg-dim">
+            →
+          </span>
+        </Link>
       </section>
     </main>
   );

@@ -24,8 +24,15 @@ const VIEWS: { id: UiState["view"]; label: string }[] = [
 export function WorkspaceShell() {
   const ws = useWorkspace();
   const { project, sprints, tasks, ui, setUi, changeSets } = ws;
+  const pending = changeSets.filter((c) => c.status === "pending");
+
+  /* Arriving from the planner: you described a project, waited for it, and
+     the only thing in here is the proposal. Open it. Anywhere else — a
+     project with work already in it — a modal opening by itself would be
+     an ambush, so it stays in the rail. */
+  const firstRun = tasks.length === 0 && pending.length === 1;
   const { surface, toolNames } = useWebMCP(() => buildProjectTools(ws));
-  const waiting = changeSets.filter((c) => c.status === "pending").length;
+  const waiting = pending.length;
 
   return (
     <div className="flex h-dvh flex-col bg-ink-900">
@@ -113,7 +120,7 @@ export function WorkspaceShell() {
             waiting > 0 ? "bg-ink-850" : "bg-ink-900"
           )}
         >
-          <ProposalList />
+          <ProposalList openOnArrival={firstRun ? pending[0].id : null} />
           <div className="min-h-0 flex-1 border-t border-ink-hair pt-5">
             <AgentActivity />
           </div>
