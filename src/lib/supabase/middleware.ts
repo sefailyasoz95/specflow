@@ -36,7 +36,15 @@ export async function updateSession(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
-  if (!user && !isPublic) {
+  /* A redirect is an answer for a browser, not for a caller. Sending an
+     unauthenticated POST /api/plan to the sign-in page made Next read the
+     multipart body as a server action and answer "Server action not
+     found" with a 404 — a machine caller learning nothing about why. The
+     API routes check the session themselves and reply in JSON, so they
+     are left to do it. */
+  const isApi = pathname.startsWith("/api/");
+
+  if (!user && !isPublic && !isApi) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
