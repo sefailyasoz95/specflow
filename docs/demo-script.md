@@ -1,19 +1,41 @@
 # 3-minute demo — shot list
 
-Under 3 minutes is a hard rule. Roughly 20s of setup, 2min of the loop, 30s of
-the close. Record with the header badge visible: it proves WebMCP is live.
+Rewritten against the organisers' guidance, which is blunt about what loses
+judges: **show it working in the first 10–15 seconds, start already signed
+in, no intro, no title card, cut every load and every pause, and keep the
+personal story for the written description.** Under 3 minutes is a hard
+rule and judges are not obliged to watch past it, so the target here is
+**2:40** with the strongest thirty seconds at the front.
 
-| Time | On screen | What you say |
+The opening shot is the product doing the thing. Not a landing page, not a
+face. The webcam stays a small picture-in-picture the whole way through —
+present, never leading.
+
+| Time | On screen | Voice / on-screen text |
 | --- | --- | --- |
-| 0:00–0:15 | Landing page, badge turns orange, tool list open | "Sprintfy is a project planner that exposes itself to agents over WebMCP. Six tools, live in the page." |
-| 0:15–0:35 | Empty project. Paste the brief into the agent. | "Here's a rough brief. Watch what it does — and watch the database." |
-| 0:35–1:05 | `get_project_context` and `propose_plan` appear in the activity rail; the diff fills the review panel | "It read the plan *and* what I'm looking at. Then it proposed. Nothing has been written yet — this is a diff, not a save." |
-| 1:05–1:30 | Approval modal opens on its own, blocking | "This is the part I care about. `apply_pending_changes` doesn't apply anything. It asks me, and the tool call *waits*." |
-| 1:30–1:45 | Click Approve. Board fills, staggered. | "One transaction in Postgres. Sprints and their tasks land together." |
-| 1:45–2:15 | Ask it to move the idempotency work to sprint 1. Second diff — this time with `~` change lines, before → after. | "Now it's editing what exists. Field-level diff: which sprint, which estimate, before and after." |
-| 2:15–2:35 | Reject with a reason typed in | "And I can say no, with a reason — which goes straight back to the agent as the tool result. It's a conversation, not a fire-and-forget." |
-| 2:35–2:50 | Agent re-cuts the sprint, `focus` rings the sprint on screen | "It can also move my view and point at what it's talking about." |
-| 2:50–3:00 | Board, final state | "Agents propose. Humans dispose. That's Sprintfy." |
+| 0:00–0:12 | Already inside a project. The agent calls `get_project_context`, then `propose_plan`. The rail logs both. The diff fills the review panel — 8 requirements, 4 sprints, 38 tasks. | "That's a whole plan my agent just proposed. Nothing has been written." **On screen: 0 rows written.** |
+| 0:12–0:30 | `apply_pending_changes` fires. The approval sheet opens and the agent visibly stops. | "The tool call is still open. It asked me, and now it's waiting." **On screen: the tool call is blocked, waiting for a human.** Leave two seconds of silence here — the pause is the point. |
+| 0:30–0:45 | Approve. The board fills in one go. | "One transaction. The sprint and its twelve tasks land together, or none of them do." |
+| 0:45–1:15 | "Move the idempotency work into sprint 1 — it blocks everything else." Second diff, field-level: sprint, estimate, before → after. **Reject**, with a reason. | "Now it's editing what exists. And I can say no —" |
+| 1:15–1:35 | ChatGPT reads your reason back and re-cuts the plan. | "— and my reason went back to it as the tool's return value. That's the whole idea: it's a conversation, not fire-and-forget." |
+| 1:35–1:50 | `focus` rings a sprint. Then: "which requirement has nothing planned?" → it names REQ-004. | "It can move my view, and it can see the shape of the plan, not just rows." |
+| 1:50–2:10 | Cut to the intake form, a PRD dropped in, then **cut straight to the finished plan**. Label the cut. | **On screen: 56s, cut.** "This is where the plan came from — a PRD, in Turkish, planned in Turkish." |
+| 2:10–2:30 | Console: the eval run, seven green. | "Seven scenarios against the real tools, on the live site. A proposal writes zero rows. A rejection comes back as a tool result." |
+| 2:30–2:40 | Board, final state. PiP goes full for two seconds. | "Agents propose. I decide. Sprintfy." |
+
+Rules for the edit, from the organisers' list:
+
+- **No live typing.** Speak to the agent, or paste. Never film a keyboard.
+- **Jump-cut every pause** — the model thinking, the page loading, your
+  "umm". Dead air is the most expensive thing in a 3-minute budget.
+- **Speed up the 56-second plan** and put a label on it. A visible "cut"
+  is honest; a hidden one is the exact thing this product argues against.
+- **On-screen text beats saying it.** "0 rows written" lands faster than a
+  sentence explaining that nothing was written.
+- **Record in short clips**, one row of the table at a time. Then a bad
+  take costs one row, not the whole video.
+- **No inspiration, no origin story, no team intro.** All of that is in the
+  written description, where judges actually read it.
 
 ## Where to record
 

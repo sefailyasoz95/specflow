@@ -1,3 +1,11 @@
+**Live: https://sprintfy.vercel.app** — no account needed to see the whole idea.
+
+Open it in the **ChatGPT desktop app, in ChatGPT mode**: its built-in browser exposes WebMCP on its own, so the tools register with no flag and no extension. Desktop Chrome with `chrome://flags/#enable-webmcp-testing` works too, as does Chrome with the ChatGPT extension. One caveat: **Codex mode in that same desktop app does not expose WebMCP**, so the tools stay dormant there and the page will honestly say so — same app, two modes, two answers.
+
+Ask your agent for `start_guided_demo`, or press "Show me a demo", and you land in a real workspace with a proposal already waiting in the review panel and six tools live.
+
+---
+
 ## Inspiration
 
 Every "agent-ready" app I looked at exposed the same shape of tool: `create_task`, `update_task`, `delete_task`. The model writes straight to the database. That is fine until the model is confidently wrong about your sprint plan, and then you are doing archaeology on a project board, trying to work out what it touched and in what order.
@@ -19,6 +27,10 @@ Sprintfy is a sprint planner — requirements, sprints, tasks, hour estimates �
 You do not start from an empty board either. You hand Sprintfy the thing you already have — a backlog note, a PRD as `.md`, `.txt`, `.pdf` or `.docx`, or a few paragraphs typed in — and it returns a plan sequenced by risk rather than by comfort. A real Turkish brief produced 8 requirements, 4 sprints and 38 tasks in 56 seconds, in Turkish, with the database migration ranked critical and placed first.
 
 Sprintfy's own planner is held to the same rule. It does not write the plan either: it authors a change set marked `source: "planner"` that lands in the same review panel, behind the same gate.
+
+**What this makes possible that was not before.** An agent can hand you a fifty-operation plan — 8 requirements, 4 sprints, 38 tasks, each task carrying both the requirement it serves and the sprint it lands in — and you accept or reject the whole thing as a single decision, in about the time it takes to read it. Before, there were two options and both were bad: let the model write fifty rows into your board unsupervised and audit them afterwards, or read its suggestions and retype them yourself. The first is fast and untrustworthy. The second is trustworthy and not worth doing. A blocking approval gate removes the trade-off, and because a refusal comes back as the tool's return value, saying no is a move in the conversation instead of the end of it.
+
+**Who it is for.** The person who owns the plan and will be held to it — a tech lead, a founding engineer, a solo developer with a client waiting. That person will not hand an agent write access to the thing they are accountable for, which is why "agent-ready planning tools" have not landed with them. They will hand over the drafting, all of it, if the decision stays theirs.
 
 ## How we built it
 
