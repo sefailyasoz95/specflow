@@ -161,6 +161,8 @@ export function buildProjectTools(ws: WorkspaceValue): ToolDescriptor[] {
             name: s.name,
             goal: s.goal,
             status: s.status,
+            startDate: s.start_date,
+            endDate: s.end_date,
             taskCount: tasks.filter((t) => t.sprint_id === s.id).length,
             estimatedHours: tasks
               .filter((t) => t.sprint_id === s.id)

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useWorkspace } from "@/store/workspace";
 import { Button, Empty, Eyebrow, Fact, IconButton, Input } from "./ui/primitives";
-import { cn, hours } from "@/lib/utils";
+import { cn, dateRange, dayCount, hours } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 import { SprintEditor, TaskEditor } from "./editors";
 import {
@@ -79,6 +79,15 @@ export function Board() {
           {sprint?.goal ? (
             <p className="mt-1.5 max-w-[52ch] text-[13.5px] leading-relaxed text-fg-mid">
               {sprint.goal}
+            </p>
+          ) : null}
+
+          {sprint && dateRange(sprint.start_date, sprint.end_date) ? (
+            <p className="mt-1.5 font-mono text-[11.5px] text-fg-dim">
+              {dateRange(sprint.start_date, sprint.end_date)}
+              {dayCount(sprint.start_date, sprint.end_date)
+                ? ` · ${dayCount(sprint.start_date, sprint.end_date)} days`
+                : ""}
             </p>
           ) : null}
         </div>
@@ -407,6 +416,15 @@ export function SprintsView() {
                       {done}/{inSprint.length} · {hours(est)}
                     </Fact>
                   </div>
+
+                  {dateRange(s.start_date, s.end_date) ? (
+                    <p className="mt-1.5 font-mono text-[11.5px] text-fg-dim">
+                      {dateRange(s.start_date, s.end_date)}
+                      {dayCount(s.start_date, s.end_date)
+                        ? ` · ${dayCount(s.start_date, s.end_date)} days`
+                        : ""}
+                    </p>
+                  ) : null}
 
                   {s.goal ? (
                     <p className="mt-1 max-w-[62ch] text-[13px] leading-relaxed text-fg-mid">
