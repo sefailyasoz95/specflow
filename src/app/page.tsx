@@ -114,9 +114,10 @@ export default function Home() {
           </ol>
           <p className="mt-5 text-[13px] leading-[1.6] text-fg-dim">
             To drive it with ChatGPT, use its Chrome extension in that same
-            browser. The in-app browsers — ChatGPT&apos;s own, and
-            Claude&apos;s — do not expose WebMCP, so the tools stay dormant
-            there however the page is opened.
+            browser — or skip the flag entirely and open this page in the
+            ChatGPT desktop app, in ChatGPT mode: its built-in browser exposes
+            WebMCP on its own. Codex mode in that same app does not, so if the
+            tools are dormant there, that is why.
           </p>
         </section>
       </main>

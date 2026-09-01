@@ -154,11 +154,19 @@ Realtime) · WebMCP · deployed on Vercel
 
 **https://sprintfy.vercel.app**
 
-Open it in **desktop Chrome with `chrome://flags/#enable-webmcp-testing`
-enabled**, or in Chrome with the ChatGPT extension installed. That is the
-surface this was built and verified on. ChatGPT's *in-app* browser does not
-expose `document.modelContext` today, so the page will honestly report WebMCP
-as off there — it is not the tools being broken.
+Three surfaces are verified:
+
+- **The ChatGPT desktop app, in ChatGPT mode.** Its built-in browser exposes
+  `document.modelContext`, so the tools register with no flag and no
+  extension — just open the URL and start talking.
+- **Desktop Chrome with `chrome://flags/#enable-webmcp-testing` enabled.**
+  This is the surface Sprintfy was built against.
+- **Chrome with the ChatGPT extension**, in that same browser.
+
+One caveat worth having before you test: **Codex mode in the same ChatGPT
+desktop app does not expose WebMCP**, so the tools stay dormant there and the
+page will honestly report WebMCP as off. Same app, two modes, two answers —
+it is not the tools being broken.
 
 **No account is needed to see the whole idea.** The landing page registers
 four tools before you sign in; ask your agent for `start_guided_demo`, or

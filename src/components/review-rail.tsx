@@ -94,9 +94,9 @@ export function WebMCPStatus({
                 </li>
               </ol>
               <p>
-                Desktop Chrome only. In-app browsers — ChatGPT&apos;s and
-                Claude&apos;s — do not expose WebMCP. To drive it with
-                ChatGPT, use its Chrome extension in this browser.
+                Or skip the flag: the ChatGPT desktop app exposes WebMCP in
+                its built-in browser, in ChatGPT mode. Codex mode in the same
+                app does not.
               </p>
             </div>
           )}

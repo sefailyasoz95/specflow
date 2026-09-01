@@ -127,14 +127,22 @@ Desktop Chrome:
 2. Relaunch Chrome
 3. Reload Sprintfy — the header badge lights up and lists the live tools
 
-Confirmed working: Chrome exposes the spec surface, `document.modelContext`,
-and the page registers against it. Driving it with ChatGPT works through
-ChatGPT's **Chrome extension** in that same browser.
+Confirmed working, in three places:
 
-In-app browsers — ChatGPT's own and Claude's — do not expose WebMCP, so the
-tools stay dormant there no matter how the page is opened. If the badge says
-off, open it: it lists every surface that was probed and what was found,
-which is usually faster than guessing at browser flags.
+- **Desktop Chrome** with the flag above. This is the surface Sprintfy was
+  built against.
+- **Chrome with the ChatGPT extension**, which is how you drive the page by
+  talking to it rather than clicking it.
+- **The ChatGPT desktop app, in ChatGPT mode.** Its built-in browser exposes
+  `document.modelContext`, so the tools register with no flag and no
+  extension.
+
+One surface in that list does not work, and it is worth knowing which:
+**Codex mode in the same ChatGPT desktop app**. Its built-in browser does
+not expose WebMCP, so the tools stay dormant there. Same application, two
+modes, two different answers — if the badge says off, check which mode you
+are in before you check anything else. The badge lists every surface that
+was probed and what was found, which is usually faster than guessing.
 
 ---
 

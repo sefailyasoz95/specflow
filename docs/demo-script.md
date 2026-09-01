@@ -17,11 +17,21 @@ the close. Record with the header badge visible: it proves WebMCP is live.
 
 ## Where to record
 
-Desktop Chrome with `chrome://flags/#enable-webmcp-testing` enabled — that
-is the only surface confirmed to expose `document.modelContext`. If the
-agent half is being shown live, drive it with ChatGPT's Chrome extension in
-that same browser. Do not record in an in-app browser: neither ChatGPT's nor
-Claude's exposes WebMCP, and the badge will correctly say off.
+Two good options, and one trap.
+
+**The ChatGPT desktop app in ChatGPT mode** is the best shot for this video.
+Its built-in browser exposes `document.modelContext` with no flag and no
+extension, so the whole demo happens inside one window — you talk, the page
+answers. That is also the surface the challenge rules point judges at.
+
+**Desktop Chrome with `chrome://flags/#enable-webmcp-testing`**, driven by
+ChatGPT's Chrome extension, is the fallback. It is the surface Sprintfy was
+built against and the one to fall back to if the desktop app misbehaves on
+the day.
+
+The trap: **Codex mode in that same ChatGPT desktop app does not expose
+WebMCP.** Its built-in browser leaves the tools dormant and the badge will
+correctly say off. Check the mode before you press record.
 
 Keep project creation out of the critical path. The planner takes 55–56
 seconds against a real brief — a third of the video spent watching a
